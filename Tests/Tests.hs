@@ -59,13 +59,14 @@ instance Show Seed where
 instance Arbitrary Seed where
     arbitrary = Seed `fmap` (resize (2^30) (arbitrarySizedIntegral `suchThat` (\x -> x > 2^6 && x < 2^30)))
 
-newtype RSAMessage = RSAMessage B.ByteString deriving (Show, Eq)
+data RSAMessage = RSAMessage Integer B.ByteString deriving (Show, Eq)
 
 instance Arbitrary RSAMessage where
     arbitrary = do
         sz <- choose (0, 128 - 11)
+        blinder <- choose (1, RSA.public_n rsaPublickey - 1)
         ws <- replicateM sz (choose (0,255) :: Gen Int)
-        return $ RSAMessage $ B.pack $ map fromIntegral ws
+        return $ RSAMessage blinder (B.pack $ map fromIntegral ws)
 
 {-
 prop_rsa_generate_valid (Positive i, RSAMessage msgz) =
@@ -76,14 +77,15 @@ prop_rsa_generate_valid (Positive i, RSAMessage msgz) =
     ((RSA.private_d priv * RSA.public_e pub) `mod` ((RSA.private_p priv - 1) * (RSA.private_q priv - 1)) == 1) &&
     (either Left (RSA.decrypt priv . fst) $ RSA.encrypt rng pub msg) == Right msg
 -}
-prop_rsa_valid fast (RSAMessage msg) =
-    (either Left (RSA.decrypt pk . fst) $ RSA.encrypt rng rsaPublickey msg) == Right msg
-    where pk       = if fast then rsaPrivatekey else rsaPrivatekey { RSA.private_p = 0, RSA.private_q = 0 }
+prop_rsa_valid fast blinding (RSAMessage blindR msg) =
+    (either Left (doDecrypt pk . fst) $ RSA.encrypt rng rsaPublickey msg) == Right msg
+    where pk = if fast then rsaPrivatekey else rsaPrivatekey { RSA.private_p = 0, RSA.private_q = 0 }
+          doDecrypt = if blinding then RSA.decryptWithBlinding blindR else RSA.decrypt
 
 prop_rsa_fast_valid  = prop_rsa_valid True
 prop_rsa_slow_valid  = prop_rsa_valid False
 
-prop_rsa_sign_valid fast (RSAMessage msg) = (either Left (\smsg -> verify msg smsg) $ sign msg) == Right True
+prop_rsa_sign_valid fast (RSAMessage _ msg) = (either Left (\smsg -> verify msg smsg) $ sign msg) == Right True
     where
         verify   = RSA.verify (SHA1.hash) sha1desc rsaPublickey
         sign     = RSA.sign (SHA1.hash) sha1desc pk
@@ -93,7 +95,7 @@ prop_rsa_sign_valid fast (RSAMessage msg) = (either Left (\smsg -> verify msg sm
 prop_rsa_sign_fast_valid = prop_rsa_sign_valid True
 prop_rsa_sign_slow_valid = prop_rsa_sign_valid False
 
-prop_dsa_valid (RSAMessage msg) =
+prop_dsa_valid (RSAMessage _ msg) =
     case DSA.verify signature (SHA1.hash) dsaPublickey msg of
         Left err -> False
         Right b  -> b
@@ -113,8 +115,10 @@ prop_dh_valid (xa, xb) = sa == sb
 
 
 asymEncryptionTests = testGroup "assymmetric cipher encryption"
-    [ testProperty "RSA (slow)" prop_rsa_slow_valid
-    , testProperty "RSA (fast)" prop_rsa_fast_valid
+    [ testProperty "RSA (slow)" (prop_rsa_valid False False)
+    , testProperty "RSA (fast)" (prop_rsa_valid True  False)
+    , testProperty "RSA (slow+blind)" (prop_rsa_valid False True)
+    , testProperty "RSA (fast+blind)" (prop_rsa_valid True  True)
     ]
 
 asymSignatureTests = testGroup "assymmetric cipher signature"

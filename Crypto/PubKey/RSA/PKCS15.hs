@@ -10,6 +10,7 @@ module Crypto.PubKey.RSA.PKCS15
     ( HashF
     , HashASN1
     , decrypt
+    , decryptWithBlinding
     , encrypt
     , sign
     , verify
@@ -20,11 +21,8 @@ import Crypto.Random
 import Crypto.Types.PubKey.RSA
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
-import Crypto.Number.ModArithmetic (inverse)
-import Crypto.Number.Prime (generatePrime)
 import Crypto.PubKey.RSA.Prim
 import Crypto.PubKey.RSA.Types
-import Data.Maybe (fromJust)
 
 type HashF = ByteString -> ByteString
 type HashASN1 = ByteString
@@ -40,15 +38,15 @@ padPKCS1 :: CryptoRandomGen g => g -> Int -> ByteString -> Either Error (ByteStr
 padPKCS1 rng len m = do
     (padding, rng') <- getRandomBytes rng (len - B.length m - 3)
     return (B.concat [ B.singleton 0, B.singleton 2, padding, B.singleton 0, m ], rng')
-    where   {- get random non-null bytes -}
-            getRandomBytes :: CryptoRandomGen g => g -> Int -> Either Error (ByteString, g)
-            getRandomBytes rng n = do
-                gend <- either (Left . RandomGenFailure) Right $ genBytes n rng
-                let (bytes, rng') = first (B.pack . filter (/= 0) . B.unpack) gend
+    where {- get random non-null bytes -}
+          getRandomBytes :: CryptoRandomGen g => g -> Int -> Either Error (ByteString, g)
+          getRandomBytes g n = do
+                gend <- either (Left . RandomGenFailure) Right $ genBytes n g
+                let (bytes, g') = first (B.pack . filter (/= 0) . B.unpack) gend
                 let left          = (n - B.length bytes)
                 if left == 0
-                    then return (bytes, rng')
-                    else getRandomBytes rng' left >>= return . first (B.append bytes)
+                    then return (bytes, g')
+                    else getRandomBytes g' left >>= return . first (B.append bytes)
 
 unpadPKCS1 :: ByteString -> Either Error ByteString
 unpadPKCS1 packed
@@ -60,12 +58,27 @@ unpadPKCS1 packed
         (z, m)       = B.splitAt 1 zm
         signal_error = (B.unpack zt /= [0, 2]) || (B.unpack z /= [0]) || (B.length ps < 8)
 
-{-| decrypt message using the private key. -}
-decrypt :: PrivateKey -> ByteString -> Either Error ByteString
-decrypt pk c
+{-| decrypt message using the private key using cryptoblinding technique.
+ -  the r parameter need to be a randomly generated integer between 1 and N.
+ -}
+decryptWithBlinding :: Integer    -- ^ Random integer between 1 and N used for blinding
+                    -> PrivateKey -- ^ RSA private key
+                    -> ByteString -- ^ cipher text
+                    -> Either Error ByteString
+decryptWithBlinding r pk c
     | B.length c /= (private_size pk) = Left MessageSizeIncorrect
-    | otherwise                       = dp pk c >>= unpadPKCS1
+    | otherwise                       = dp r pk c >>= unpadPKCS1
         where dp = if private_p pk /= 0 && private_q pk /= 0 then dpFast else dpSlow
+
+{-| decrypt message using the private key.
+ -  Use this method only when the decryption is not in a context where an attacker
+ -  could gain information from the timing of the operation. In this context use
+ -  decryptWithBlinding.
+ -}
+decrypt :: PrivateKey -- ^ RSA private key
+        -> ByteString -- ^ cipher text
+        -> Either Error ByteString
+decrypt = decryptWithBlinding 1
 
 {- | encrypt a bytestring using the public key and a CryptoRandomGen random generator.
  - the message need to be smaller than the key size - 11
@@ -80,7 +93,7 @@ encrypt rng pk m
 
 {-| sign message using private key, a hash and its ASN1 description -}
 sign :: HashF -> HashASN1 -> PrivateKey -> ByteString -> Either Error ByteString
-sign hash hashdesc pk m = makeSignature hash hashdesc (private_size pk) m >>= d pk
+sign hash hashdesc pk m = makeSignature hash hashdesc (private_size pk) m >>= d 1 pk
     where d = if private_p pk /= 0 && private_q pk /= 0 then dpFast else dpSlow
 
 {-| verify message with the signed message -}
