@@ -12,14 +12,10 @@ module Crypto.PubKey.RSA
     , generate
     ) where
 
-import Control.Arrow (first)
 import Crypto.Random
 import Crypto.Types.PubKey.RSA
-import Data.ByteString (ByteString)
-import qualified Data.ByteString as B
 import Crypto.Number.ModArithmetic (inverse)
 import Crypto.Number.Prime (generatePrime)
-import Crypto.PubKey.RSA.Prim
 import Crypto.PubKey.RSA.Types
 import Data.Maybe (fromJust)
 
