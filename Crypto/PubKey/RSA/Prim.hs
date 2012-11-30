@@ -13,7 +13,6 @@ module Crypto.PubKey.RSA.Prim
 
 import Data.ByteString (ByteString)
 import Data.Maybe (fromJust)
-import qualified Data.ByteString as B
 import Crypto.Types.PubKey.RSA
 import Crypto.PubKey.RSA.Types
 import Crypto.Number.ModArithmetic (exponantiation, inverse)
