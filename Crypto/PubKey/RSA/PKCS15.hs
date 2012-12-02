@@ -17,7 +17,7 @@ module Crypto.PubKey.RSA.PKCS15
     ) where
 
 import Control.Arrow (first)
-import Crypto.Random
+import Crypto.Random.Types
 import Crypto.Types.PubKey.RSA
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -34,17 +34,17 @@ instance Monad (Either Error) where
     (Right x) >>= f = f x
 #endif
 
-padPKCS1 :: CryptoRandomGen g => g -> Int -> ByteString -> Either Error (ByteString, g)
+padPKCS1 :: CPRG g => g -> Int -> ByteString -> Either Error (ByteString, g)
 padPKCS1 rng len m = do
     (padding, rng') <- getRandomBytes rng (len - B.length m - 3)
     return (B.concat [ B.singleton 0, B.singleton 2, padding, B.singleton 0, m ], rng')
     where {- get random non-null bytes -}
-          getRandomBytes :: CryptoRandomGen g => g -> Int -> Either Error (ByteString, g)
-          getRandomBytes g n = do
-                gend <- either (Left . RandomGenFailure) Right $ genBytes n g
-                let (bytes, g') = first (B.pack . filter (/= 0) . B.unpack) gend
-                let left          = (n - B.length bytes)
-                if left == 0
+          getRandomBytes :: CPRG g => g -> Int -> Either Error (ByteString, g)
+          getRandomBytes g n =
+                let gend = genBytes g n
+                    (bytes, g') = first (B.pack . filter (/= 0) . B.unpack) gend
+                    left        = (n - B.length bytes)
+                 in if left == 0
                     then return (bytes, g')
                     else getRandomBytes g' left >>= return . first (B.append bytes)
 
@@ -67,7 +67,7 @@ decryptWithBlinding :: Integer    -- ^ Random integer between 1 and N used for b
                     -> Either Error ByteString
 decryptWithBlinding r pk c
     | B.length c /= (private_size pk) = Left MessageSizeIncorrect
-    | otherwise                       = dp r pk c >>= unpadPKCS1
+    | otherwise                       = unpadPKCS1 $ dp r pk c
         where dp = if private_p pk /= 0 && private_q pk /= 0 then dpFast else dpSlow
 
 {-| decrypt message using the private key.
@@ -80,27 +80,27 @@ decrypt :: PrivateKey -- ^ RSA private key
         -> Either Error ByteString
 decrypt = decryptWithBlinding 1
 
-{- | encrypt a bytestring using the public key and a CryptoRandomGen random generator.
+{- | encrypt a bytestring using the public key and a CPRG random generator.
  - the message need to be smaller than the key size - 11
  -}
-encrypt :: CryptoRandomGen g => g -> PublicKey -> ByteString -> Either Error (ByteString, g)
+encrypt :: CPRG g => g -> PublicKey -> ByteString -> Either Error (ByteString, g)
 encrypt rng pk m
     | B.length m > public_size pk - 11 = Left MessageTooLong
     | otherwise                        = do
         (em, rng') <- padPKCS1 rng (public_size pk) m
-        c          <- ep pk em
+        let c      = ep pk em
         return (c, rng')
 
 {-| sign message using private key, a hash and its ASN1 description -}
 sign :: HashF -> HashASN1 -> PrivateKey -> ByteString -> Either Error ByteString
-sign hash hashdesc pk m = makeSignature hash hashdesc (private_size pk) m >>= d 1 pk
+sign hash hashdesc pk m = d 1 pk `fmap` makeSignature hash hashdesc (private_size pk) m
     where d = if private_p pk /= 0 && private_q pk /= 0 then dpFast else dpSlow
 
 {-| verify message with the signed message -}
 verify :: HashF -> HashASN1 -> PublicKey -> ByteString -> ByteString -> Either Error Bool
 verify hash hashdesc pk m sm = do
     s  <- makeSignature hash hashdesc (public_size pk) m
-    em <- ep pk sm
+    let em = ep pk sm
     Right (s == em)
 
 {- makeSignature for sign and verify -}

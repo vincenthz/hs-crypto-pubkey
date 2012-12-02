@@ -16,7 +16,7 @@ module Crypto.PubKey.DSA
     , verify
     ) where
 
-import Crypto.Random
+import Crypto.Random.Types
 import Data.Maybe
 import Data.ByteString (ByteString)
 import Crypto.Number.ModArithmetic (exponantiation, inverse)
@@ -26,22 +26,19 @@ import Crypto.Types.PubKey.DSA
 
 data Error = 
       InvalidSignature          -- ^ signature is not valid r or s is not between the bound 0..q
-    | RandomGenFailure GenError -- ^ the random generator returns an error. give the opportunity to reseed for example.
     deriving (Show,Eq)
 
 {-| sign message using the private key. -}
-sign :: CryptoRandomGen g => g -> (ByteString -> ByteString) -> PrivateKey -> ByteString -> Either GenError (Signature, g)
+sign :: CPRG g => g -> (ByteString -> ByteString) -> PrivateKey -> ByteString -> (Signature, g)
 sign rng hash pk m =
+    let (k, rng') = generateMax rng q
+        kinv      = fromJust $ inverse k q
+        r         = expmod g k p `mod` q
+        s         = (kinv * (hm + x * r)) `mod` q
     -- Recalculate the signature in the unlikely case that r = 0 or s = 0
-    case generateMax rng q of
-        Left err        -> Left err
-        Right (k, rng') ->
-            let kinv = fromJust $ inverse k q in
-            let r    = expmod g k p `mod` q in
-            let s    = (kinv * (hm + x * r)) `mod` q in
-            if r == 0 || s == 0
+     in if r == 0 || s == 0
                 then sign rng' hash pk m
-                else Right ((r, s), rng')
+                else ((r, s), rng')
     where
         (p,g,q)   = private_params pk
         x         = private_x pk

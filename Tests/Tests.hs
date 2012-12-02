@@ -25,15 +25,13 @@ import qualified Crypto.PubKey.DH as DH
 import Crypto.Number.Serialize (i2osp)
 
 import qualified Crypto.Hash.SHA1 as SHA1
-import Crypto.Random
 import RNG
 import PregenKeys
 
-withAleasInteger :: Rng -> Seed -> (Rng -> Either GenError (a,Rng)) -> a
-withAleasInteger rng (Seed i) f = fst $ throwLeft $ f $ throwLeft $ reseed (i2osp (if i < 0 then -i else i)) rng
-    where throwLeft = either (const (error "impossible")) id
+withAleasInteger :: Rng -> Seed -> (Rng -> (a,Rng)) -> a
+withAleasInteger rng (Seed i) f = fst $ f $ reseed (i2osp (if i < 0 then -i else i)) rng
 
-withRNG :: Seed -> (Rng -> Either GenError (a,Rng)) -> a
+withRNG :: Seed -> (Rng -> (a,Rng)) -> a
 withRNG seed f = withAleasInteger rng seed f
 
 newtype PositiveSmall = PositiveSmall Integer
@@ -100,7 +98,7 @@ prop_dsa_valid (RSAMessage _ msg) =
         Left err -> False
         Right b  -> b
     where
-        Right (signature, rng') = DSA.sign rng (SHA1.hash) dsaPrivatekey msg
+        (signature, rng') = DSA.sign rng (SHA1.hash) dsaPrivatekey msg
 
 instance Arbitrary DH.PrivateNumber where
     arbitrary = fromIntegral <$> (suchThat (arbitrary :: Gen Integer) (\x -> x >= 1))

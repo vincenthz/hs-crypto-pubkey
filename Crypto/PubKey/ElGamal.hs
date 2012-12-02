@@ -30,17 +30,16 @@ module Crypto.PubKey.ElGamal
 import Crypto.Number.ModArithmetic (exponantiation, inverse)
 import Crypto.Number.Generate (generateOfSize)
 import Crypto.Types.PubKey.DH
-import Crypto.Random
+import Crypto.Random.Types
 import Control.Arrow (first)
-import Control.Applicative ((<$>))
 import Data.Maybe (fromJust)
 
 -- | generate a private number with no specific property
 -- this number is usually called a.
 -- 
 -- FIXME replace generateOfSize by generateBetween [0, q-1]
-generatePrivate :: CryptoRandomGen g => g -> Int -> Either GenError (PrivateNumber, g)
-generatePrivate rng bits = either Left (Right . first PrivateNumber) $ generateOfSize rng bits
+generatePrivate :: CPRG g => g -> Int -> (PrivateNumber, g)
+generatePrivate rng bits = first PrivateNumber $ generateOfSize rng bits
 
 -- | generate a public number that is for the other party benefits.
 -- this number is usually called h=g^a
@@ -57,8 +56,8 @@ encryptWith (PrivateNumber b) (p,g) (PublicNumber h) m = (c1,c2)
 
 -- | encrypt a message using params and public keys
 -- will generate b (called the ephemeral key)
-encrypt :: CryptoRandomGen g => g -> Params -> PublicNumber -> Integer -> Either GenError ((Integer,Integer), g)
-encrypt rng params public m = (\(b,rng') -> (encryptWith b params public m,rng')) <$> generatePrivate rng 1024
+encrypt :: CPRG g => g -> Params -> PublicNumber -> Integer -> ((Integer,Integer), g)
+encrypt rng params public m = first (\b -> encryptWith b params public m) $ generatePrivate rng 1024
 
 -- | decrypt message
 decrypt :: Params -> PrivateNumber -> (Integer, Integer) -> Integer

@@ -3,7 +3,7 @@ module RNG where
 import Data.Word
 import Data.List (foldl')
 import qualified Data.ByteString as B
-import Crypto.Random
+import Crypto.Random.Types
 import Control.Arrow (first)
 
 {- this is a just test rng. this is absolutely not a serious RNG. DO NOT use elsewhere -}
@@ -23,11 +23,10 @@ getBytes n g =
         (l, g'') = getBytes (n-1) g'
      in (b:l, g'')
 
-instance CryptoRandomGen Rng where
-    newGen _       = Right (Rng (2,3))
-    genSeedLength  = 0
-    genBytes len g = Right $ first B.pack $ getBytes len g
-    reseed bs (Rng (a,b)) = Right $ Rng (fromIntegral a', b')
+instance CPRG Rng where
+    cprgGenBytes g len = first B.pack $ getBytes len g
+
+reseed bs (Rng (a,b)) = Rng (fromIntegral a', b')
         where a' = foldl' (\v i -> ((fromIntegral v) + (fromIntegral i) * 36969) `mod` 65536) a l
               b' = foldl' (\v i -> ((fromIntegral v) + (fromIntegral i) * 18070) `mod` 65536) b l
               l  = B.unpack bs

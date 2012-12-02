@@ -20,7 +20,7 @@ Flag benchmark
 Library
   Build-Depends:     base >= 4 && < 5
                    , bytestring
-                   , crypto-api >= 0.5
+                   , crypto-random-types
                    , crypto-pubkey-types >= 0.2 && < 0.3
                    , crypto-numbers
   Exposed-modules:   Crypto.PubKey.RSA
@@ -37,11 +37,11 @@ Test-Suite test-crypto-pubkey
   hs-source-dirs:    Tests
   Main-Is:           Tests.hs
   Build-depends:     base >= 4 && < 5
-                   , crypto-api >= 0.5
                    , bytestring
                    , cryptohash
                    , crypto-pubkey
                    , crypto-numbers
+                   , crypto-random-types
                    , QuickCheck >= 2
                    , test-framework >= 0.3.3 && < 0.7
                    , test-framework-quickcheck2 >= 0.2.9 && < 0.3
@@ -52,7 +52,7 @@ Benchmark bench-crypto-pubkey
   type:              exitcode-stdio-1.0
   Build-depends:     base >= 4 && < 5
                    , bytestring
-                   , crypto-api
+                   , crypto-random-types
                    , crypto-pubkey
                    , criterion
                    , mtl

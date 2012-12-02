@@ -12,7 +12,7 @@ module Crypto.PubKey.RSA
     , generate
     ) where
 
-import Crypto.Random
+import Crypto.Random.Types
 import Crypto.Types.PubKey.RSA
 import Crypto.Number.ModArithmetic (inverse)
 import Crypto.Number.Prime (generatePrime)
@@ -20,9 +20,9 @@ import Crypto.PubKey.RSA.Types
 import Data.Maybe (fromJust)
 
 -- | generate a pair of (private, public) key of size in bytes.
-generate :: CryptoRandomGen g => g -> Int -> Integer -> Either Error ((PublicKey, PrivateKey), g)
+generate :: CPRG g => g -> Int -> Integer -> ((PublicKey, PrivateKey), g)
 generate rng size e = do
-    ((p,q), rng') <- generatePQ rng
+    let ((p,q), rng') = generatePQ rng
     let n   = p * q
     let phi = (p-1)*(q-1)
     case inverse e phi of
@@ -42,13 +42,12 @@ generate rng size e = do
                         , private_dQ   = d `mod` (q-1)
                         , private_qinv = fromJust $ inverse q p -- q and p are coprime, so fromJust is safe.
                         }
-             in Right ((pub, priv), rng')
+             in ((pub, priv), rng')
     where
-        generatePQ g = do
-            (p, g')  <- genPrime g (8 * (size `div` 2))
-            (q, g'') <- generateQ p g'
-            return ((p,q), g'')
-        generateQ p h = do
-            (q, h') <- genPrime h (8 * (size - (size `div` 2)))
-            if p == q then generateQ p h' else return (q, h')
-        genPrime g sz = either (Left . RandomGenFailure) Right $ generatePrime g sz
+        generatePQ g =
+            let (p, g')  = generatePrime g (8 * (size `div` 2))
+                (q, g'') = generateQ p g'
+             in ((p,q), g'')
+        generateQ p h =
+            let (q, h') = generatePrime h (8 * (size - (size `div` 2)))
+             in if p == q then generateQ p h' else (q, h')
