@@ -22,19 +22,19 @@ import Crypto.Number.ModArithmetic (exponantiation)
 import Crypto.Number.Prime (generateSafePrime)
 import Crypto.Number.Generate (generateOfSize)
 import Crypto.Types.PubKey.DH
-import Crypto.Random
+import Crypto.Random.Types
 import Control.Arrow (first)
 
 -- | generate params from a specific generator (2 or 5 are common values)
 -- we generate a safe prime (a prime number of the form 2p+1 where p is also prime)
-generateParams :: CryptoRandomGen g => g -> Int -> Integer -> Either GenError (Params, g)
+generateParams :: CPRG g => g -> Int -> Integer -> (Params, g)
 generateParams rng bits generator =
-    either Left (Right . first (\p -> (p, generator))) $ generateSafePrime rng bits
+    first (\p -> (p, generator)) $ generateSafePrime rng bits
 
 -- | generate a private number with no specific property
 -- this number is usually called X in DH text.
-generatePrivate :: CryptoRandomGen g => g -> Int -> Either GenError (PrivateNumber, g)
-generatePrivate rng bits = either Left (Right . first PrivateNumber) $ generateOfSize rng bits
+generatePrivate :: CPRG g => g -> Int -> (PrivateNumber, g)
+generatePrivate rng bits = first PrivateNumber $ generateOfSize rng bits
 
 -- | generate a public number that is for the other party benefits.
 -- this number is usually called Y in DH text.
