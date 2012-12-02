@@ -25,6 +25,7 @@ Library
                    , crypto-numbers
   Exposed-modules:   Crypto.PubKey.RSA
                      Crypto.PubKey.RSA.PKCS15
+                     Crypto.PubKey.RSA.PSS
                      Crypto.PubKey.DSA
                      Crypto.PubKey.DH
   other-modules:     Crypto.PubKey.ElGamal
