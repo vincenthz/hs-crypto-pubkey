@@ -1,5 +1,6 @@
 module Crypto.PubKey.RSA.PSS
     ( signWithSalt
+    , sign
     , verify
     ) where
 
@@ -9,7 +10,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import Crypto.PubKey.RSA.Prim
 import Crypto.PubKey.RSA.Types
-import Crypto.Number.Serialize (os2ip, i2ospOf)
+import Crypto.Number.Serialize (i2ospOf)
 import Data.Maybe (fromJust)
 import Data.Bits (xor)
 
@@ -29,10 +30,10 @@ signWithSalt salt pk m = dp pk em
           maskedDB = B.pack $ B.zipWith xor db dbmask
           em       = B.concat [maskedDB, h, B.singleton 0xbc]
 
-{-
-sign rng =
-          (salt,rng') = getRandomBytes rng hashLen
--}
+sign :: CPRG g => g -> Int -> PrivateKey -> ByteString -> (ByteString, g)
+sign rng saltLen pk m = (signWithSalt salt pk m, rng')
+    where
+          (salt,rng') = genRandomBytes rng saltLen
 
 verify :: PublicKey -> Int -> ByteString -> ByteString -> Bool
 verify pk sLen m s
