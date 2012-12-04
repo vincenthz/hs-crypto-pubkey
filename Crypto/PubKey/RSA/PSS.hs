@@ -17,10 +17,8 @@ hash = id
 hashLen = 20
 
 signWithSalt :: ByteString -> PrivateKey -> ByteString -> ByteString
-signWithSalt salt pk m = d 1 pk em
-    where d = if private_p pk /= 0 && private_q pk /= 0 then dpFast else dpSlow
-
-          mHash    = hash m
+signWithSalt salt pk m = dp pk em
+    where mHash    = hash m
           dbLen    = private_size pk - hashLen - 1
           saltLen  = B.length salt
 

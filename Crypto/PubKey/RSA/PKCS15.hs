@@ -67,8 +67,7 @@ decryptWithBlinding :: Integer    -- ^ Random integer between 1 and N used for b
                     -> Either Error ByteString
 decryptWithBlinding r pk c
     | B.length c /= (private_size pk) = Left MessageSizeIncorrect
-    | otherwise                       = unpadPKCS1 $ dp r pk c
-        where dp = if private_p pk /= 0 && private_q pk /= 0 then dpFast else dpSlow
+    | otherwise                       = unpadPKCS1 $ dpWithBlinding r pk c
 
 {-| decrypt message using the private key.
  -  Use this method only when the decryption is not in a context where an attacker
@@ -93,8 +92,7 @@ encrypt rng pk m
 
 {-| sign message using private key, a hash and its ASN1 description -}
 sign :: HashF -> HashASN1 -> PrivateKey -> ByteString -> Either Error ByteString
-sign hash hashdesc pk m = d 1 pk `fmap` makeSignature hash hashdesc (private_size pk) m
-    where d = if private_p pk /= 0 && private_q pk /= 0 then dpFast else dpSlow
+sign hash hashdesc pk m = dp pk `fmap` makeSignature hash hashdesc (private_size pk) m
 
 {-| verify message with the signed message -}
 verify :: HashF -> HashASN1 -> PublicKey -> ByteString -> ByteString -> Either Error Bool
