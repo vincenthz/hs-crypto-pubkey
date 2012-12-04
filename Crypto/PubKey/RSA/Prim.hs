@@ -17,7 +17,6 @@ module Crypto.PubKey.RSA.Prim
 import Data.ByteString (ByteString)
 import Data.Maybe (fromJust)
 import Crypto.Types.PubKey.RSA
-import Crypto.PubKey.RSA.Types
 import Crypto.Number.ModArithmetic (exponantiation, inverse)
 import Crypto.Number.Serialize (os2ip, i2ospOf_)
 
