@@ -12,7 +12,7 @@ module Crypto.PubKey.RSA
     , generate
     ) where
 
-import Crypto.Random.Types
+import Crypto.Random.API
 import Crypto.Types.PubKey.RSA
 import Crypto.Number.ModArithmetic (inverse)
 import Crypto.Number.Prime (generatePrime)

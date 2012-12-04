@@ -30,7 +30,7 @@ module Crypto.PubKey.ElGamal
 import Crypto.Number.ModArithmetic (exponantiation, inverse)
 import Crypto.Number.Generate (generateOfSize)
 import Crypto.Types.PubKey.DH
-import Crypto.Random.Types
+import Crypto.Random.API
 import Control.Arrow (first)
 import Data.Maybe (fromJust)
 

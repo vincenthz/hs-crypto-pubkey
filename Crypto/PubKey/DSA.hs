@@ -16,7 +16,7 @@ module Crypto.PubKey.DSA
     , verify
     ) where
 
-import Crypto.Random.Types
+import Crypto.Random.API
 import Data.Maybe
 import Data.ByteString (ByteString)
 import Crypto.Number.ModArithmetic (exponantiation, inverse)

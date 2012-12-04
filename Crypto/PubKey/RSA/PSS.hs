@@ -3,7 +3,7 @@ module Crypto.PubKey.RSA.PSS
     , verify
     ) where
 
-import Crypto.Random.Types
+import Crypto.Random.API
 import Crypto.Types.PubKey.RSA
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B

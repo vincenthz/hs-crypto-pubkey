@@ -17,7 +17,7 @@ module Crypto.PubKey.RSA.PKCS15
     ) where
 
 import Control.Arrow (first)
-import Crypto.Random.Types
+import Crypto.Random.API
 import Crypto.Types.PubKey.RSA
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -41,8 +41,8 @@ padPKCS1 rng len m = do
     where {- get random non-null bytes -}
           getRandomBytes :: CPRG g => g -> Int -> Either Error (ByteString, g)
           getRandomBytes g n =
-                let gend = genBytes g n
-                    (bytes, g') = first (B.pack . filter (/= 0) . B.unpack) gend
+                let (bs0,g') = genRandomBytes g n
+                    bytes = B.pack $ filter (/= 0) $ B.unpack $ bs0
                     left        = (n - B.length bytes)
                  in if left == 0
                     then return (bytes, g')

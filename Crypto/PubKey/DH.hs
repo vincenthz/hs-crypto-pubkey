@@ -22,7 +22,7 @@ import Crypto.Number.ModArithmetic (exponantiation)
 import Crypto.Number.Prime (generateSafePrime)
 import Crypto.Number.Generate (generateOfSize)
 import Crypto.Types.PubKey.DH
-import Crypto.Random.Types
+import Crypto.Random.API
 import Control.Arrow (first)
 
 -- | generate params from a specific generator (2 or 5 are common values)
