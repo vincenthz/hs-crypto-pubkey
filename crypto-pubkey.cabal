@@ -44,8 +44,8 @@ Test-Suite test-crypto-pubkey
                    , crypto-numbers
                    , crypto-random-api
                    , QuickCheck >= 2
-                   , test-framework >= 0.3.3 && < 0.7
-                   , test-framework-quickcheck2 >= 0.2.9 && < 0.3
+                   , test-framework >= 0.3.3
+                   , test-framework-quickcheck2 >= 0.2.9
 
 Benchmark bench-crypto-pubkey
   hs-source-dirs:    Benchs
