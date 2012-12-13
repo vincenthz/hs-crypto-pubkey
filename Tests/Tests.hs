@@ -83,7 +83,7 @@ prop_rsa_valid fast blinding (RSAMessage blindR msg) =
 prop_rsa_fast_valid  = prop_rsa_valid True
 prop_rsa_slow_valid  = prop_rsa_valid False
 
-prop_rsa_sign_valid fast (RSAMessage _ msg) = (either Left (\smsg -> verify msg smsg) $ sign msg) == Right True
+prop_rsa_sign_valid fast (RSAMessage _ msg) = (either (const False) (\smsg -> verify msg smsg) $ sign msg) == True
     where
         verify   = RSA.verify (SHA1.hash) sha1desc rsaPublickey
         sign     = RSA.sign (SHA1.hash) sha1desc pk

@@ -6,6 +6,7 @@
 -- Portability : Good
 --
 {-# LANGUAGE FlexibleInstances, CPP #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Crypto.PubKey.RSA.PKCS15
     (
     -- * signature types
@@ -138,11 +139,11 @@ signSafer rng hash hashdesc pk m = do
     (signWithBlinding blinder hash hashdesc pk m, rng')
 
 {-| verify message with the signed message -}
-verify :: HashF -> HashASN1 -> PublicKey -> ByteString -> ByteString -> Either Error Bool
-verify hash hashdesc pk m sm = do
-    s  <- makeSignature hash hashdesc (public_size pk) m
-    let em = ep pk sm
-    Right (s == em)
+verify :: HashF -> HashASN1 -> PublicKey -> ByteString -> ByteString -> Bool
+verify hash hashdesc pk m sm =
+    case makeSignature hash hashdesc (public_size pk) m of
+        Left _  -> False
+        Right s -> s == (ep pk sm)
 
 {- makeSignature for sign and verify -}
 makeSignature :: HashF -> HashASN1 -> Int -> ByteString -> Either Error ByteString
