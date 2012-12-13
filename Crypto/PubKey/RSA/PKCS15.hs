@@ -39,13 +39,6 @@ import Crypto.PubKey.RSA.Types
 type HashF = ByteString -> ByteString
 type HashASN1 = ByteString
 
-#if ! (MIN_VERSION_base(4,3,0))
-instance Monad (Either Error) where
-    return          = Right
-    (Left x) >>= _  = Left x
-    (Right x) >>= f = f x
-#endif
-
 -- | This produce a standard PKCS1.5 padding
 pad :: CPRG g => g -> Int -> ByteString -> Either Error (ByteString, g)
 pad rng len m
@@ -81,7 +74,7 @@ unpad packed
         (zt, ps0m)   = B.splitAt 2 packed
         (ps, zm)     = B.span (/= 0) ps0m
         (z, m)       = B.splitAt 1 zm
-        signal_error = (B.unpack zt /= [0, 2]) || (B.unpack z /= [0]) || (B.length ps < 8)
+        signal_error = zt /= "\x00\x02" || z /= "\x00" || (B.length ps < 8)
 
 {-| decrypt message using the private key using cryptoblinding technique.
  -  the r parameter need to be a randomly generated integer between 1 and N.
