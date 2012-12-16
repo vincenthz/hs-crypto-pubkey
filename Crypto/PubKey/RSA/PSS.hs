@@ -61,15 +61,15 @@ signWithSalt params salt pk m = dp pk em
     where mHash    = (pssHash params) m
           dbLen    = private_size pk - hashLen - 1
           saltLen  = B.length salt
-          hashLen  = B.length (hash B.empty)
+          hashLen  = B.length (hashF B.empty)
+          hashF    = pssHash params
 
           m'       = B.concat [B.replicate 8 0,mHash,salt]
-          h        = hash m'
+          h        = hashF m'
           db       = B.concat [B.replicate (dbLen - saltLen - 1) 0,B.singleton 1,salt]
-          dbmask   = (pssMaskGenAlg params) hash h dbLen
+          dbmask   = (pssMaskGenAlg params) hashF h dbLen
           maskedDB = B.pack $ B.zipWith xor db dbmask
           em       = B.concat [maskedDB, h, B.singleton (pssTrailerField params)]
-          hash     = pssHash params
 
 -- | Sign using the PSS Parameters
 sign :: CPRG g
@@ -99,22 +99,22 @@ verify params pk m s
               maskedDB  = B.take (B.length em - hashLen - 1) em
               h         = B.take hashLen $ B.drop (B.length maskedDB) em
               dbLen     = public_size pk - hashLen - 1
-              dbmask    = (pssMaskGenAlg params) hash h dbLen
+              dbmask    = (pssMaskGenAlg params) hashF h dbLen
               db        = B.pack $ B.zipWith xor maskedDB dbmask
               (ps0,z)   = B.break (== 1) db
               (b1,salt) = B.splitAt 1 z
-              mHash     = hash m
+              mHash     = hashF m
               m'        = B.concat [B.replicate 8 0,mHash,salt]
-              h'        = hash m'
-              hash      = pssHash params
-              hashLen   = B.length (hash B.empty)
+              h'        = hashF m'
+              hashF     = pssHash params
+              hashLen   = B.length (hashF B.empty)
 
 
 -- | Mask generation algorithm MGF1
 mgf1 :: MaskGenAlgorithm
-mgf1 hash seed len = loop B.empty 0
+mgf1 hashF seed len = loop B.empty 0
     where loop t counter
             | B.length t >= len = B.take len t
             | otherwise         = let counterBS = fromJust $ i2ospOf 4 counter
-                                      newT = t `B.append` hash (seed `B.append` counterBS)
+                                      newT = t `B.append` hashF (seed `B.append` counterBS)
                                    in loop newT (counter+1)
