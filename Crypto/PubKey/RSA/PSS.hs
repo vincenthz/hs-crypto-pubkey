@@ -101,4 +101,4 @@ mgf1 hash seed len = loop B.empty 0
             | B.length t >= len = B.take len t
             | otherwise         = let counterBS = fromJust $ i2ospOf 4 counter
                                       newT = t `B.append` hash (seed `B.append` counterBS)
-                                   in loop newT (counter+4)
+                                   in loop newT (counter+1)
