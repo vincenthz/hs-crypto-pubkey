@@ -23,6 +23,7 @@ import qualified Crypto.PubKey.RSA.PKCS15 as RSA
 import qualified Crypto.PubKey.DSA as DSA
 import qualified Crypto.PubKey.DH as DH
 import Crypto.Number.Serialize (i2osp)
+import Crypto.PubKey.HashDescr
 
 import qualified Crypto.Hash.SHA1 as SHA1
 import RNG
@@ -85,9 +86,8 @@ prop_rsa_slow_valid  = prop_rsa_valid False
 
 prop_rsa_sign_valid fast (RSAMessage _ msg) = (either (const False) (\smsg -> verify msg smsg) $ sign msg) == True
     where
-        verify   = RSA.verify (SHA1.hash) sha1desc rsaPublickey
-        sign     = RSA.sign (SHA1.hash) sha1desc pk
-        sha1desc = B.pack [0x30,0x21,0x30,0x09,0x06,0x05,0x2b,0x0e,0x03, 0x02,0x1a,0x05,0x00,0x04,0x14]
+        verify   = RSA.verify hashDescrSHA1 rsaPublickey
+        sign     = RSA.sign hashDescrSHA1 pk
         pk       = if fast then rsaPrivatekey else rsaPrivatekey { RSA.private_p = 0, RSA.private_q = 0 }
 
 prop_rsa_sign_fast_valid = prop_rsa_sign_valid True

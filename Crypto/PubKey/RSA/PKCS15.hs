@@ -9,11 +9,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Crypto.PubKey.RSA.PKCS15
     (
-    -- * signature types
-      HashF
-    , HashASN1
     -- * padding and unpadding
-    , pad
+      pad
     , padSignature
     , unpad
     -- * private key operations
@@ -35,9 +32,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import Crypto.PubKey.RSA.Prim
 import Crypto.PubKey.RSA.Types
-
-type HashF = ByteString -> ByteString
-type HashASN1 = ByteString
+import Crypto.PubKey.HashDescr
 
 -- | This produce a standard PKCS1.5 padding
 pad :: CPRG g => g -> Int -> ByteString -> Either Error (ByteString, g)
@@ -118,27 +113,27 @@ encrypt rng pk m = do
     (em, rng') <- pad rng (public_size pk) m
     return (ep pk em, rng')
 
-signWithBlinding :: Integer -> HashF -> HashASN1 -> PrivateKey -> ByteString -> Either Error ByteString
-signWithBlinding blinder hash hashdesc pk m = dpWithBlinding blinder pk `fmap` makeSignature hash hashdesc (private_size pk) m
+signWithBlinding :: Integer -> HashDescr -> PrivateKey -> ByteString -> Either Error ByteString
+signWithBlinding blinder hashDescr pk m = dpWithBlinding blinder pk `fmap` makeSignature hashDescr (private_size pk) m
 
 {-| sign message using private key, a hash and its ASN1 description -}
-sign :: HashF -> HashASN1 -> PrivateKey -> ByteString -> Either Error ByteString
-sign hash hashdesc pk m = dp pk `fmap` makeSignature hash hashdesc (private_size pk) m
+sign :: HashDescr -> PrivateKey -> ByteString -> Either Error ByteString
+sign hashDescr pk m = dp pk `fmap` makeSignature hashDescr (private_size pk) m
 
 -- | like sign, except it generates a blinder to obfuscate timings
-signSafer :: CPRG g => g -> HashF -> HashASN1 -> PrivateKey -> ByteString -> (Either Error ByteString, g)
-signSafer rng hash hashdesc pk m = do
+signSafer :: CPRG g => g -> HashDescr -> PrivateKey -> ByteString -> (Either Error ByteString, g)
+signSafer rng hashDescr pk m =
     let (blinder, rng') = generateMax rng $ (private_n pk - 2) + 2
-    (signWithBlinding blinder hash hashdesc pk m, rng')
+     in (signWithBlinding blinder hashDescr pk m, rng')
 
 {-| verify message with the signed message -}
-verify :: HashF -> HashASN1 -> PublicKey -> ByteString -> ByteString -> Bool
-verify hash hashdesc pk m sm =
-    case makeSignature hash hashdesc (public_size pk) m of
+verify :: HashDescr -> PublicKey -> ByteString -> ByteString -> Bool
+verify hashDescr pk m sm =
+    case makeSignature hashDescr (public_size pk) m of
         Left _  -> False
         Right s -> s == (ep pk sm)
 
 {- makeSignature for sign and verify -}
-makeSignature :: HashF -> HashASN1 -> Int -> ByteString -> Either Error ByteString
-makeSignature hash descr klen m = padSignature klen signature
-    where signature = descr `B.append` hash m
+makeSignature :: HashDescr -> Int -> ByteString -> Either Error ByteString
+makeSignature hashDescr klen m = padSignature klen signature
+    where signature = (digestToASN1 hashDescr) $ (hashFunction hashDescr) m
