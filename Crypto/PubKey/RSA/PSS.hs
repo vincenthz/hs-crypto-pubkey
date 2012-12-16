@@ -1,5 +1,7 @@
 module Crypto.PubKey.RSA.PSS
     ( PSSParams(..)
+    , defaultPSSParams
+    , defaultPSSParamsSHA1
     -- * Sign and verify functions
     , signWithSalt
     , sign
@@ -16,6 +18,7 @@ import Crypto.PubKey.RSA.Prim
 import Crypto.PubKey.RSA.Types
 import Crypto.PubKey.HashDescr
 import Crypto.Number.Serialize (i2ospOf)
+import Crypto.Hash
 import Data.Maybe (fromJust)
 import Data.Bits (xor)
 import Data.Word
@@ -32,6 +35,19 @@ data PSSParams = PSSParams { pssHash         :: HashFunction     -- ^ Hash funct
                            , pssSaltLength   :: Int              -- ^ Length of salt
                            , pssTrailerField :: Word8            -- ^ Trailer field, usually 0xbc
                            }
+
+-- | Default Params with a specified hash function
+defaultPSSParams :: HashFunction -> PSSParams
+defaultPSSParams hashF =
+    PSSParams { pssHash         = hashF
+              , pssMaskGenAlg   = mgf1
+              , pssSaltLength   = B.length $ hashF B.empty
+              , pssTrailerField = 0xbc
+              }
+
+-- | Default Params using SHA1 algorithm.
+defaultPSSParamsSHA1 :: PSSParams
+defaultPSSParamsSHA1 = defaultPSSParams (digestToByteString . (hash :: ByteString -> Digest SHA1))
 
 -- | Sign using the PSS parameters and the salt explicitely passed as parameters.
 --
