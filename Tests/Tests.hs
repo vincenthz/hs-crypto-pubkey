@@ -113,15 +113,15 @@ prop_dh_valid (xa, xb) = sa == sb
 
 
 asymEncryptionTests = testGroup "assymmetric cipher encryption"
-    [ testProperty "RSA (slow)" (prop_rsa_valid False False)
-    , testProperty "RSA (fast)" (prop_rsa_valid True  False)
-    , testProperty "RSA (slow+blind)" (prop_rsa_valid False True)
-    , testProperty "RSA (fast+blind)" (prop_rsa_valid True  True)
+    [ testProperty "RSA(PKCS15) (slow)" (prop_rsa_valid False False)
+    , testProperty "RSA(PKCS15) (fast)" (prop_rsa_valid True  False)
+    , testProperty "RSA(PKCS15) (slow+blind)" (prop_rsa_valid False True)
+    , testProperty "RSA(PKCS15) (fast+blind)" (prop_rsa_valid True  True)
     ]
 
 asymSignatureTests = testGroup "assymmetric cipher signature"
-    [ testProperty "RSA (slow)" prop_rsa_sign_slow_valid
-    , testProperty "RSA (fast)" prop_rsa_sign_fast_valid
+    [ testProperty "RSA(PKCS15) (slow)" prop_rsa_sign_slow_valid
+    , testProperty "RSA(PKCS15) (fast)" prop_rsa_sign_fast_valid
     , testProperty "DSA" prop_dsa_valid
     ]
 
