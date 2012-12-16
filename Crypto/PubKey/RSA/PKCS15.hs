@@ -5,7 +5,6 @@
 -- Stability   : experimental
 -- Portability : Good
 --
-{-# LANGUAGE FlexibleInstances, CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Crypto.PubKey.RSA.PKCS15
     (
