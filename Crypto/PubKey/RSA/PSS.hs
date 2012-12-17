@@ -32,7 +32,7 @@ type MaskGenAlgorithm = HashFunction -- ^ hash function to use
 -- | Parameters for PSS signature/verification.
 data PSSParams = PSSParams { pssHash         :: HashFunction     -- ^ Hash function to use
                            , pssMaskGenAlg   :: MaskGenAlgorithm -- ^ Mask Gen algorithm to use
-                           , pssSaltLength   :: Int              -- ^ Length of salt
+                           , pssSaltLength   :: Int              -- ^ Length of salt. need to be <= to hLen.
                            , pssTrailerField :: Word8            -- ^ Trailer field, usually 0xbc
                            }
 
