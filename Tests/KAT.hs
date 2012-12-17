@@ -480,6 +480,9 @@ e2 98 c7 bb ce 2e ee 78 2a 19 5a a6 6f e2 d0 73
 doSignTest key (i, vector) = testCase (show i) (signature vector @=? actual)
     where actual = RSAPSS.signWithSalt RSAPSS.defaultPSSParamsSHA1 (salt vector) key (message vector) 
 
+doVerifyTest key (i, vector) = testCase (show i) (True @=? actual)
+    where actual = RSAPSS.verify RSAPSS.defaultPSSParamsSHA1 (private_pub key) (message vector) (signature vector)
+
 doMGFTest (i, vmgf) = testCase (show i) (dbMask vmgf @=? actual)
     where actual = RSAPSS.mgf1 SHA1.hash (seed vmgf) (B.length $ dbMask vmgf)
 
@@ -492,6 +495,12 @@ vectorsMGF =
 
 katTests =
     [ testGroup "MGF1" $ map doMGFTest (zip [0..] vectorsMGF)
-    , testGroup "RSA Key Special" $ map (doSignTest rsaKey0) (zip [0..] vectorsKey0)
-    , testGroup "RSA Key 1024 bits" $ map (doSignTest rsaKey1) (zip [0..] vectorsKey1)
+    , testGroup "RSA PSS Sign"
+        [ testGroup "Key Special" $ map (doSignTest rsaKey0) (zip [0..] vectorsKey0)
+        , testGroup "Key 1024 bits" $ map (doSignTest rsaKey1) (zip [0..] vectorsKey1)
+        ]
+    , testGroup "RSA PSS Verify"
+        [ testGroup "Key Special" $ map (doVerifyTest rsaKey0) (zip [0..] vectorsKey0)
+        , testGroup "Key 1024 bits" $ map (doVerifyTest rsaKey1) (zip [0..] vectorsKey1)
+        ]
     ]
