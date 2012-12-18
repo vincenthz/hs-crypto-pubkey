@@ -19,30 +19,30 @@ import Crypto.Number.Prime (generatePrime)
 import Crypto.PubKey.RSA.Types
 import Data.Maybe (fromJust)
 
+-- | generate a public key and private key with p and q.
+generateWith :: (Integer, Integer) -> Int -> Integer -> Maybe (PublicKey, PrivateKey)
+generateWith (p,q) size e = (pub,priv)
+    where n   = p*q
+          phi = (p-1)*(q-1)
+          d   = fromJust $ inverse e phi -- e and phi need to be coprime
+          pub = PublicKey { public_size = size
+                          , public_n    = n
+                          , public_e    = e
+                          }
+          priv = PrivateKey { private_pub  = pub
+                            , private_d    = d
+                            , private_p    = p
+                            , private_q    = q
+                            , private_dP   = d `mod` (p-1)
+                            , private_dQ   = d `mod` (q-1)
+                            , private_qinv = fromJust $ inverse q p -- q and p are coprime, so fromJust is safe.
+                            }
+
 -- | generate a pair of (private, public) key of size in bytes.
 generate :: CPRG g => g -> Int -> Integer -> ((PublicKey, PrivateKey), g)
 generate rng size e = do
-    let ((p,q), rng') = generatePQ rng
-    let n   = p * q
-    let phi = (p-1)*(q-1)
-    case inverse e phi of
-        Nothing -> generate rng' size e
-        Just d  ->
-            let pub = PublicKey
-                        { public_size = size
-                        , public_n    = n
-                        , public_e    = e
-                        }
-                priv = PrivateKey
-                        { private_pub  = pub
-                        , private_d    = d
-                        , private_p    = p
-                        , private_q    = q
-                        , private_dP   = d `mod` (p-1)
-                        , private_dQ   = d `mod` (q-1)
-                        , private_qinv = fromJust $ inverse q p -- q and p are coprime, so fromJust is safe.
-                        }
-             in ((pub, priv), rng')
+    let (pq, rng') = generatePQ rng
+     in (generateWith pq size e, rng')
     where
         generatePQ g =
             let (p, g')  = generatePrime g (8 * (size `div` 2))
