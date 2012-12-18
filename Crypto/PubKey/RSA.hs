@@ -25,7 +25,7 @@ import Data.Maybe (fromJust)
 --
 -- e need to be coprime to (p-1)*(q-1). a small hamming weight results in better performance.
 -- 0x10001 is a popular choice. 3 is popular as well, but proven to not be as secure for some cases.
-generateWith :: (Integer, Integer) -> Int -> Integer -> Maybe (PublicKey, PrivateKey)
+generateWith :: (Integer, Integer) -> Int -> Integer -> (PublicKey, PrivateKey)
 generateWith (p,q) size e = (pub,priv)
     where n   = p*q
           phi = (p-1)*(q-1)
