@@ -38,12 +38,19 @@ dpFast r pk c = i2ospOf_ (private_size pk) (multiplication rm1 (m2 + h * (privat
         m2  = expmod iC (private_dQ pk) (private_q pk)
         h   = ((private_qinv pk) * (m1 - m2)) `mod` (private_p pk)
 
+dpFastNoBlinder :: PrivateKey -> ByteString -> ByteString
+dpFastNoBlinder pk c = i2ospOf_ (private_size pk) (m2 + h * (private_q pk))
+     where iC = os2ip c
+           m1 = expmod iC (private_dP pk) (private_p pk)
+           m2 = expmod iC (private_dQ pk) (private_q pk)
+           h  = ((private_qinv pk) * (m1 - m2)) `mod` (private_p pk)
+
 -- | Compute the RSA decrypt primitive.
 -- if the p and q numbers are available, then dpFast is used
 -- otherwise, we use dpSlow which only need d and n.
 dp :: PrivateKey -> ByteString -> ByteString
 dp pk
-    | private_p pk /= 0 && private_q pk /= 0 = dpFast 1 pk
+    | private_p pk /= 0 && private_q pk /= 0 = dpFastNoBlinder pk
     | otherwise                              = dpSlow pk
 
 -- | Compute the RSA decrypt primitive
@@ -66,7 +73,4 @@ expmod = exponantiation
 
 -- | multiply 2 integers in Zm only performing the modulo operation if necessary
 multiplication :: Integer -> Integer -> Integer -> Integer
-multiplication a b m
-             | a == 1    = b
-             | b == 1    = a
-             | otherwise = (a * b) `mod` m
+multiplication a b m = (a * b) `mod` m

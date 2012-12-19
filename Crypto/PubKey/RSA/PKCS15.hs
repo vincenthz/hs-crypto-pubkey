@@ -89,7 +89,9 @@ decryptWithBlinding r pk c
 decrypt :: PrivateKey -- ^ RSA private key
         -> ByteString -- ^ cipher text
         -> Either Error ByteString
-decrypt = decryptWithBlinding 1
+decrypt pk c
+    | B.length c /= (private_size pk) = Left MessageSizeIncorrect
+    | otherwise                       = unpad $ dp pk c
 
 -- | decrypt message using the private key and by generating a blinder.
 --
