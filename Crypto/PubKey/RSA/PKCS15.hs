@@ -72,9 +72,9 @@ unpad packed
         (z, m)       = B.splitAt 1 zm
         signal_error = zt /= "\x00\x02" || z /= "\x00" || (B.length ps < 8)
 
-{-| decrypt message using the private key using cryptoblinding technique.
- -  the r parameter need to be a randomly generated integer between 1 and N.
- -}
+-- | decrypt message using the private key using cryptoblinding technique.
+--
+-- the r parameter need to be a randomly generated integer between 1 and N.
 decryptWithBlinding :: Integer    -- ^ Random integer between 1 and N used for blinding
                     -> PrivateKey -- ^ RSA private key
                     -> ByteString -- ^ cipher text
@@ -83,11 +83,11 @@ decryptWithBlinding r pk c
     | B.length c /= (private_size pk) = Left MessageSizeIncorrect
     | otherwise                       = unpad $ dpWithBlinding r pk c
 
-{-| decrypt message using the private key.
- -  Use this method only when the decryption is not in a context where an attacker
- -  could gain information from the timing of the operation. In this context use
- -  decryptWithBlinding or decryptRandomTiming.
- -}
+-- | decrypt message using the private key.
+-- Use this method only when the decryption is not in a context where an attacker
+-- could gain information from the timing of the operation. In this context use
+-- decryptWithBlinding or decryptSafer.
+--
 decrypt :: PrivateKey -- ^ RSA private key
         -> ByteString -- ^ cipher text
         -> Either Error ByteString
@@ -108,18 +108,19 @@ decryptSafer rng pk b =
     let (blinder, rng') = generateMax rng $ (private_n pk - 2) + 2
      in (decryptWithBlinding blinder pk b, rng')
 
-{- | encrypt a bytestring using the public key and a CPRG random generator.
- - the message need to be smaller than the key size - 11
- -}
+-- | encrypt a bytestring using the public key and a CPRG random generator.
+--
+-- the message need to be smaller than the key size - 11
 encrypt :: CPRG g => g -> PublicKey -> ByteString -> Either Error (ByteString, g)
 encrypt rng pk m = do
     (em, rng') <- pad rng (public_size pk) m
     return (ep pk em, rng')
 
+-- | just like sign but use an explicit blinding to obfuscate timings
 signWithBlinding :: Integer -> HashDescr -> PrivateKey -> ByteString -> Either Error ByteString
 signWithBlinding blinder hashDescr pk m = dpWithBlinding blinder pk `fmap` makeSignature hashDescr (private_size pk) m
 
-{-| sign message using private key, a hash and its ASN1 description -}
+-- | sign message using private key, a hash and its ASN1 description
 sign :: HashDescr -> PrivateKey -> ByteString -> Either Error ByteString
 sign hashDescr pk m = dp pk `fmap` makeSignature hashDescr (private_size pk) m
 
@@ -129,7 +130,7 @@ signSafer rng hashDescr pk m =
     let (blinder, rng') = generateMax rng $ (private_n pk - 2) + 2
      in (signWithBlinding blinder hashDescr pk m, rng')
 
-{-| verify message with the signed message -}
+-- | verify message with the signed message
 verify :: HashDescr -> PublicKey -> ByteString -> ByteString -> Bool
 verify hashDescr pk m sm =
     case makeSignature hashDescr (public_size pk) m of
