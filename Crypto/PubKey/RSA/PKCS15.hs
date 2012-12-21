@@ -33,7 +33,7 @@ import Crypto.PubKey.RSA.Prim
 import Crypto.PubKey.RSA.Types
 import Crypto.PubKey.HashDescr
 
--- | This produce a standard PKCS1.5 padding
+-- | This produce a standard PKCS1.5 padding for encryption
 pad :: CPRG g => g -> Int -> ByteString -> Either Error (ByteString, g)
 pad rng len m
     | B.length m > len - 11 = Left MessageTooLong
@@ -52,6 +52,7 @@ pad rng len m
                         else let (bend, g'') = getNonNullRandom g' left
                               in (bytes `B.append` bend, g'')
 
+-- | Produce a standard PKCS1.5 padding for signature
 padSignature :: Int -> ByteString -> Either Error ByteString
 padSignature klen signature
     | klen < siglen+1 = Left SignatureTooLong
@@ -60,6 +61,7 @@ padSignature klen signature
         siglen    = B.length signature
         padding   = B.replicate (klen - siglen - 3) 0xff
 
+-- | Try to remove a standard PKCS1.5 encryption padding.
 unpad :: ByteString -> Either Error ByteString
 unpad packed
     | signal_error = Left MessageNotRecognized
