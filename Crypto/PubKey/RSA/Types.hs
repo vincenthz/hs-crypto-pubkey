@@ -10,9 +10,10 @@ module Crypto.PubKey.RSA.Types
     ) where
 
 data Error =
-      MessageSizeIncorrect      -- ^ the message to decrypt is not of the correct size (need to be == private_size)
-    | MessageTooLong            -- ^ the message to encrypt is too long (>= private_size - 11)
-    | MessageNotRecognized      -- ^ the message decrypted doesn't have a PKCS15 structure (0 2 .. 0 msg)
-    | SignatureTooLong          -- ^ the signature generated through the hash is too long to process with this key
+      MessageSizeIncorrect -- ^ the message to decrypt is not of the correct size (need to be == private_size)
+    | MessageTooLong       -- ^ the message to encrypt is too long (>= private_size - 11)
+    | MessageNotRecognized -- ^ the message decrypted doesn't have a PKCS15 structure (0 2 .. 0 msg)
+    | SignatureTooLong     -- ^ the signature generated through the hash is too long to process with this key
+    | InvalidParameters    -- ^ some parameters lead to breaking assumptions.
     deriving (Show,Eq)
 
