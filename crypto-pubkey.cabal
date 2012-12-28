@@ -26,6 +26,7 @@ Library
                    , crypto-numbers
   Exposed-modules:   Crypto.PubKey.RSA
                      Crypto.PubKey.RSA.PKCS15
+                     Crypto.PubKey.RSA.OAEP
                      Crypto.PubKey.RSA.PSS
                      Crypto.PubKey.DSA
                      Crypto.PubKey.DH
@@ -35,7 +36,7 @@ Library
                      Crypto.PubKey.RSA.Types
                      Crypto.PubKey.RSA.Prim
                      Crypto.PubKey.Internal
-  ghc-options:       -Wall
+  ghc-options:       -Wall -O2
 
 Test-Suite test-crypto-pubkey
   type:              exitcode-stdio-1.0
