@@ -69,14 +69,13 @@ hashDescrSHA512 =
 
 -- | Generate the marshalled structure with the following ASN1 structure:
 --
---   [Start Sequence
+--   Start Sequence
 --     ,Start Sequence
 --       ,OID oid
 --       ,Null
 --     ,End Sequence
 --     ,OctetString digest
 --   ,End Sequence
---   ]
 --
 toHashWithInfo :: ByteString -> ByteString -> ByteString
 toHashWithInfo pre digest = pre `B.append` digest
