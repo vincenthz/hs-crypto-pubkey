@@ -13,6 +13,7 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 
 import Crypto.PubKey.RSA
+import Crypto.PubKey.MaskGenFunction
 import qualified Crypto.PubKey.RSA.PSS as RSAPSS
 import qualified Crypto.Hash.SHA1 as SHA1
 
@@ -477,14 +478,14 @@ e2 98 c7 bb ce 2e ee 78 2a 19 5a a6 6f e2 d0 73
 
 -}
 
-doSignTest key (i, vector) = testCase (show i) (signature vector @=? actual)
+doSignTest key (i, vector) = testCase (show i) (Right (signature vector) @=? actual)
     where actual = RSAPSS.signWithSalt RSAPSS.defaultPSSParamsSHA1 (salt vector) key (message vector) 
 
 doVerifyTest key (i, vector) = testCase (show i) (True @=? actual)
     where actual = RSAPSS.verify RSAPSS.defaultPSSParamsSHA1 (private_pub key) (message vector) (signature vector)
 
 doMGFTest (i, vmgf) = testCase (show i) (dbMask vmgf @=? actual)
-    where actual = RSAPSS.mgf1 SHA1.hash (seed vmgf) (B.length $ dbMask vmgf)
+    where actual = mgf1 SHA1.hash (seed vmgf) (B.length $ dbMask vmgf)
 
 vectorsMGF =
     [ VectorMgf

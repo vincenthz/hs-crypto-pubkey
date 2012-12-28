@@ -6,8 +6,6 @@ module Crypto.PubKey.RSA.PSS
     , signWithSalt
     , sign
     , verify
-    -- * mask generation algorithms
-    , mgf1
     ) where
 
 import Crypto.Random.API
@@ -17,17 +15,10 @@ import qualified Data.ByteString as B
 import Crypto.PubKey.RSA.Prim
 import Crypto.PubKey.RSA.Types
 import Crypto.PubKey.HashDescr
-import Crypto.Number.Serialize (i2ospOf)
+import Crypto.PubKey.MaskGenFunction
 import Crypto.Hash
-import Data.Maybe (fromJust)
 import Data.Bits (xor)
 import Data.Word
-
--- | Represent a mask generation algorithm
-type MaskGenAlgorithm = HashFunction -- ^ hash function to use
-                     -> ByteString   -- ^ seed
-                     -> Int          -- ^ length to generate
-                     -> ByteString
 
 -- | Parameters for PSS signature/verification.
 data PSSParams = PSSParams { pssHash         :: HashFunction     -- ^ Hash function to use
@@ -56,8 +47,10 @@ signWithSalt :: PSSParams  -- ^ PSS Parameters to use
              -> ByteString -- ^ Salt to use
              -> PrivateKey -- ^ RSA Private Key
              -> ByteString -- ^ Message to sign
-             -> ByteString
-signWithSalt params salt pk m = dp pk em
+             -> Either Error ByteString
+signWithSalt params salt pk m
+    -- | hashLen          = Left SignatureTooLong
+    | otherwise        = Right $ dp pk em
     where mHash    = (pssHash params) m
           dbLen    = private_size pk - hashLen - 1
           saltLen  = B.length salt
@@ -77,7 +70,7 @@ sign :: CPRG g
      -> PSSParams       -- ^ PSS Parameters to use
      -> PrivateKey      -- ^ RSA Private Key
      -> ByteString      -- ^ Message to sign
-     -> (ByteString, g)
+     -> (Either Error ByteString, g)
 sign rng params pk m = (signWithSalt params salt pk m, rng')
     where
           (salt,rng') = genRandomBytes rng (pssSaltLength params)
@@ -108,13 +101,3 @@ verify params pk m s
               h'        = hashF m'
               hashF     = pssHash params
               hashLen   = B.length (hashF B.empty)
-
-
--- | Mask generation algorithm MGF1
-mgf1 :: MaskGenAlgorithm
-mgf1 hashF seed len = loop B.empty 0
-    where loop t counter
-            | B.length t >= len = B.take len t
-            | otherwise         = let counterBS = fromJust $ i2ospOf 4 counter
-                                      newT = t `B.append` hashF (seed `B.append` counterBS)
-                                   in loop newT (counter+1)

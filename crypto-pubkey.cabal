@@ -30,6 +30,7 @@ Library
                      Crypto.PubKey.DSA
                      Crypto.PubKey.DH
                      Crypto.PubKey.HashDescr
+                     Crypto.PubKey.MaskGenFunction
   other-modules:     Crypto.PubKey.ElGamal
                      Crypto.PubKey.RSA.Types
                      Crypto.PubKey.RSA.Prim
