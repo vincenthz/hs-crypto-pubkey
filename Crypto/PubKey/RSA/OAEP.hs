@@ -100,7 +100,7 @@ decrypt oaep pk cipher
           db         = B.pack $ B.zipWith xor maskedDB dbmask
           -- getting db's fields
           (labelHash',db1) = B.splitAt hashLen db
-          (_,db2)    = B.span (/= 0) db1
+          (_,db2)    = B.break (/= 0) db1
           (ps1,msg)  = B.splitAt 1 db2
 
           paddingSuccess = and' [ labelHash' == labelHash -- no need for constant eq
