@@ -40,11 +40,11 @@ encrypt :: CPRG g
         -> OAEPParams -- ^ OAEP params to use for encryption.
         -> PublicKey  -- ^ Public key.
         -> ByteString -- ^ Message to encrypt
-        -> (Either Error ByteString, g)
+        -> Either Error (ByteString, g)
 encrypt g oaep pk msg
-    | k < 2*hashLen+2              = (Left InvalidParameters, g)
-    | mLen > k - 2*hashLen-2       = (Left MessageTooLong, g)
-    | otherwise                    = (Right (ep pk em), g')
+    | k < 2*hashLen+2              = Left InvalidParameters
+    | mLen > k - 2*hashLen-2       = Left MessageTooLong
+    | otherwise                    = Right (ep pk em, g')
     where -- parameters
           k          = public_size pk
           mLen       = B.length msg
