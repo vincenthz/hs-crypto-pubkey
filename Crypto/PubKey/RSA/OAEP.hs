@@ -3,10 +3,13 @@ module Crypto.PubKey.RSA.OAEP
     (
       OAEPParams(..)
     , defaultOAEPParams
-    -- * OAEP encryption and decryption primitives
+    -- * OAEP encryption
     , encryptWithSeed
     , encrypt
+    -- * OAEP decryption
     , decrypt
+    , decryptSafer
+    , decryptWithBlinding
     ) where
 
 import Crypto.Random.API
@@ -15,6 +18,7 @@ import Crypto.PubKey.HashDescr
 import Crypto.PubKey.MaskGenFunction
 import Crypto.PubKey.RSA.Prim
 import Crypto.PubKey.RSA.Types
+import Crypto.PubKey.RSA (generateBlinder)
 import Crypto.PubKey.Internal (and')
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -74,24 +78,22 @@ encrypt g oaep pk msg = (encryptWithSeed seed oaep pk msg, g')
           hashLen    = B.length (hashF B.empty)
           (seed, g') = genRandomBytes g hashLen
 
--- | Decrypt a ciphertext using OAEP
-decrypt :: OAEPParams -- ^ OAEP params to use for decryption.
-        -> PrivateKey -- ^ Private key
-        -> ByteString -- ^ Cipher text
-        -> Either Error ByteString
-decrypt oaep pk cipher
-    | B.length cipher /= k = Left MessageSizeIncorrect
-    | k < 2*hashLen+2      = Left InvalidParameters
-    | paddingSuccess       = Right msg
-    | otherwise            = Left MessageNotRecognized
+-- | un-pad a OAEP encoded message.
+--
+-- It doesn't apply the RSA decryption primitive
+unpad :: OAEPParams  -- ^ OAEP params to use
+      -> Int         -- ^ size of the key in bytes
+      -> ByteString  -- ^ encoded message (not encrypted)
+      -> Either Error ByteString
+unpad oaep k em
+    | paddingSuccess = Right msg
+    | otherwise      = Left MessageNotRecognized
     where -- parameters
-          k          = private_size pk
           hashF      = oaepHash oaep
           mgf        = (oaepMaskGenAlg oaep) hashF
           labelHash  = hashF $ maybe B.empty id $ oaepLabel oaep
           hashLen    = B.length labelHash
           -- getting em's fields
-          em         = dp pk cipher
           (pb, em0)  = B.splitAt 1 em
           (maskedSeed,maskedDB) = B.splitAt hashLen em0
           seedMask   = mgf maskedDB hashLen
@@ -107,3 +109,49 @@ decrypt oaep pk cipher
                                 , ps1        == "\x01"
                                 , pb         == "\x00"
                                 ]
+
+-- | Decrypt a ciphertext using OAEP and a predefined blinder.
+decryptWithBlinding :: Blinder    -- ^ Blinder to use
+                    -> OAEPParams -- ^ OAEP params to use for decryption.
+                    -> PrivateKey -- ^ Private key
+                    -> ByteString -- ^ Cipher text
+                    -> Either Error ByteString
+decryptWithBlinding blinder oaep pk cipher
+    | B.length cipher /= k = Left MessageSizeIncorrect
+    | k < 2*hashLen+2      = Left InvalidParameters
+    | otherwise            = unpad oaep (private_size pk) $ dpWithBlinding blinder pk cipher
+    where -- parameters
+          k          = private_size pk
+          hashF      = oaepHash oaep
+          hashLen    = B.length (hashF B.empty)
+
+-- | Decrypt a ciphertext using OAEP
+--
+-- Use this method only when the decryption is not in a context where an attacker
+-- could gain information from the timing of the operation. In this context use
+-- decryptWithBlinding or decryptSafer.
+decrypt :: OAEPParams -- ^ OAEP params to use for decryption.
+        -> PrivateKey -- ^ Private key
+        -> ByteString -- ^ Cipher text
+        -> Either Error ByteString
+decrypt oaep pk cipher
+    | B.length cipher /= k = Left MessageSizeIncorrect
+    | k < 2*hashLen+2      = Left InvalidParameters
+    | otherwise            = unpad oaep (private_size pk) $ dp pk cipher
+    where -- parameters
+          k          = private_size pk
+          hashF      = oaepHash oaep
+          hashLen    = B.length (hashF B.empty)
+
+-- | Decrypt a ciphertext using OAEP and by generating a blinder.
+--
+-- try harder in hiding timing of the decryption operation with uses the
+-- secret part of the key.
+decryptSafer :: CPRG g
+             => g          -- ^ random number generator
+             -> OAEPParams -- ^ OAEP params to use for decryption
+             -> PrivateKey -- ^ Private key
+             -> ByteString -- ^ Cipher text
+             -> (Either Error ByteString, g)
+decryptSafer rng oaep pk cipher = (decryptWithBlinding blinder oaep pk cipher, rng')
+    where (blinder, rng') = generateBlinder rng (private_n pk)
