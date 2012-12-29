@@ -41,7 +41,12 @@ vectorInt = VectorOAEP
 doEncryptionTest key (i, vector) = testCase (show i) (Right (cipherText vector) @=? actual)
     where actual = OAEP.encryptWithSeed (seed vector) (OAEP.defaultOAEPParams SHA1.hash) key (message vector) 
 
+doDecryptionTest key (i, vector) = testCase (show i) (Right (message vector) @=? actual)
+    where actual = OAEP.decrypt (OAEP.defaultOAEPParams SHA1.hash) key (cipherText vector)
+
 oaepTests = testGroup "RSA-OAEP"
     [ testGroup "encryption internal"
-        [ doEncryptionTest (private_pub rsaKeyInt) (0, vectorInt) ]
+        [ doEncryptionTest (private_pub rsaKeyInt) (0, vectorInt)
+        , doDecryptionTest rsaKeyInt (0, vectorInt)
+        ]
     ]
