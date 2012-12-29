@@ -17,7 +17,7 @@ import Crypto.PubKey.RSA.Types
 import Crypto.PubKey.HashDescr
 import Crypto.PubKey.MaskGenFunction
 import Crypto.Hash
-import Data.Bits (xor)
+import Data.Bits (xor, shiftR, (.&.))
 import Data.Word
 
 -- | Parameters for PSS signature/verification.
@@ -56,12 +56,13 @@ signWithSalt params salt pk m
           saltLen  = B.length salt
           hashLen  = B.length (hashF B.empty)
           hashF    = pssHash params
+          pubBits  = private_size pk * 8 -- to change if public_size is converted in bytes
 
           m'       = B.concat [B.replicate 8 0,mHash,salt]
           h        = hashF m'
           db       = B.concat [B.replicate (dbLen - saltLen - 1) 0,B.singleton 1,salt]
           dbmask   = (pssMaskGenAlg params) hashF h dbLen
-          maskedDB = B.pack $ B.zipWith xor db dbmask
+          maskedDB = B.pack $ normalizeToKeySize pubBits $ B.zipWith xor db dbmask
           em       = B.concat [maskedDB, h, B.singleton (pssTrailerField params)]
 
 -- | Sign using the PSS Parameters
@@ -89,11 +90,12 @@ verify params pk m s
     | b1 /= B.singleton 1                 = False
     | otherwise                           = h == h'
         where em        = ep pk s
+              pubBits   = public_size pk * 8 -- to change if public_size is converted in bytes
               maskedDB  = B.take (B.length em - hashLen - 1) em
               h         = B.take hashLen $ B.drop (B.length maskedDB) em
               dbLen     = public_size pk - hashLen - 1
               dbmask    = (pssMaskGenAlg params) hashF h dbLen
-              db        = B.pack $ B.zipWith xor maskedDB dbmask
+              db        = B.pack $ normalizeToKeySize pubBits $ B.zipWith xor maskedDB dbmask
               (ps0,z)   = B.break (== 1) db
               (b1,salt) = B.splitAt 1 z
               mHash     = hashF m
@@ -101,3 +103,9 @@ verify params pk m s
               h'        = hashF m'
               hashF     = pssHash params
               hashLen   = B.length (hashF B.empty)
+
+normalizeToKeySize :: Int -> [Word8] -> [Word8]
+normalizeToKeySize _    []     = [] -- very unlikely
+normalizeToKeySize bits (x:xs) = x .&. mask : xs
+    where mask = if sh > 0 then 0xff `shiftR` (8-sh) else 0xff
+          sh   = ((bits-1) .&. 0x7)
