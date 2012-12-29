@@ -61,6 +61,7 @@ Benchmark bench-crypto-pubkey
   Build-depends:     base >= 4 && < 5
                    , bytestring
                    , cprng-aes >= 0.3.0
+                   , cryptohash
                    , crypto-random-api
                    , crypto-pubkey
                    , criterion
