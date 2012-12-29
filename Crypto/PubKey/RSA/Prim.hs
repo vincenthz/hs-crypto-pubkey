@@ -53,7 +53,7 @@ dp pk
     | private_p pk /= 0 && private_q pk /= 0 = dpFastNoBlinder pk
     | otherwise                              = dpSlow pk
 
--- | Compute the RSA decrypt primitive
+-- | Compute the RSA decrypt primitive using a blinder
 --
 -- the blinder is a number between 1 and n,
 -- and will be multiplied after exponantiation to e to the message.
