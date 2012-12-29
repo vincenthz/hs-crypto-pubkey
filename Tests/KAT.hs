@@ -17,6 +17,8 @@ import Crypto.PubKey.MaskGenFunction
 import qualified Crypto.PubKey.RSA.PSS as RSAPSS
 import qualified Crypto.Hash.SHA1 as SHA1
 
+import KAT.OAEP
+
 --katRSA_PSS = testCase "RSA-PSS"
 
 test_sort8 = head [1,2,3] @?= 1
@@ -504,4 +506,5 @@ katTests =
         [ testGroup "Key Special" $ map (doVerifyTest rsaKey0) (zip [0..] vectorsKey0)
         , testGroup "Key 1024 bits" $ map (doVerifyTest rsaKey1) (zip [0..] vectorsKey1)
         ]
+    , oaepTests
     ]
