@@ -19,7 +19,8 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 
 import qualified Crypto.PubKey.RSA as RSA
-import qualified Crypto.PubKey.RSA.PKCS15 as RSA
+import qualified Crypto.PubKey.RSA.PKCS15 as RSAPKCS15
+import qualified Crypto.PubKey.RSA.OAEP as RSAOAEP
 import qualified Crypto.PubKey.DSA as DSA
 import qualified Crypto.PubKey.DH as DH
 import Crypto.Number.Serialize (i2osp)
@@ -61,34 +62,49 @@ instance Arbitrary Seed where
 
 data RSAMessage = RSAMessage Integer B.ByteString deriving (Show, Eq)
 
+data RSAOAEPMessage = RSAOAEPMessage Integer B.ByteString RSAOAEP.OAEPParams
+
+instance Show RSAOAEPMessage where
+    show (RSAOAEPMessage a1 b1 _) = "RSAOAEPMessage " ++ show a1 ++ " " ++ show b1
+
+instance Eq RSAOAEPMessage where
+    (RSAOAEPMessage a1 b1 _) == (RSAOAEPMessage a2 b2 _) = a1 == a2 && b1 == b2
+
+genBS :: Int -> Gen B.ByteString
+genBS sz = (B.pack . map fromIntegral) `fmap` replicateM sz (choose (0,255) :: Gen Int)
+
+instance Arbitrary RSAOAEPMessage where
+    arbitrary = do
+        let hashLen = B.length (SHA1.hash B.empty)
+        sz <- choose (0, 128 - 2*hashLen - 2)
+        blinder <- choose (1, RSA.public_n rsaPublickey - 1)
+        ws <- genBS sz
+        return $ RSAOAEPMessage blinder ws (RSAOAEP.defaultOAEPParams SHA1.hash)
+
 instance Arbitrary RSAMessage where
     arbitrary = do
         sz <- choose (0, 128 - 11)
         blinder <- choose (1, RSA.public_n rsaPublickey - 1)
-        ws <- replicateM sz (choose (0,255) :: Gen Int)
-        return $ RSAMessage blinder (B.pack $ map fromIntegral ws)
+        ws <- genBS sz
+        return $ RSAMessage blinder ws
 
-{-
-prop_rsa_generate_valid (Positive i, RSAMessage msgz) =
-    let keysz = 64 in
-    let (pub,priv) = withAleasInteger rng i (\g -> RSA.generate g keysz 65537) in
-    let msg = B.take (keysz - 11) msgz in
-    (RSA.private_p priv * RSA.private_q priv == RSA.private_n priv) &&
-    ((RSA.private_d priv * RSA.public_e pub) `mod` ((RSA.private_p priv - 1) * (RSA.private_q priv - 1)) == 1) &&
-    (either Left (RSA.decrypt priv . fst) $ RSA.encrypt rng pub msg) == Right msg
--}
-prop_rsa_valid fast blinding (RSAMessage blindR msg) =
+prop_rsa_pkcs15_valid fast blinding (RSAMessage blindR msg) =
     (either Left (doDecrypt pk) $ fst $ RSAPKCS15.encrypt rng rsaPublickey msg) == Right msg
     where pk = if fast then rsaPrivatekey else rsaPrivatekey { RSA.private_p = 0, RSA.private_q = 0 }
-          doDecrypt = if blinding then RSA.decryptWithBlinding blindR else RSA.decrypt
+          doDecrypt = if blinding then RSAPKCS15.decryptWithBlinding blindR else RSAPKCS15.decrypt
 
-prop_rsa_fast_valid  = prop_rsa_valid True
-prop_rsa_slow_valid  = prop_rsa_valid False
+prop_rsa_oaep_valid fast blinding (RSAOAEPMessage blindR msg oaepParams) =
+    (either Left (doDecrypt oaepParams pk) $ fst $ RSAOAEP.encrypt rng oaepParams rsaPublickey msg) `assertEq` Right msg
+    where pk        = if fast then rsaPrivatekey else rsaPrivatekey { RSA.private_p = 0, RSA.private_q = 0 }
+          doDecrypt = if blinding then RSAOAEP.decrypt {-WithBlinding blindR-} else RSAOAEP.decrypt
+
+assertEq (Right got) (Right exp) = if got == exp then True else error ("got: " ++ show got ++ "\nexp: " ++ show exp)
+assertEq (Left got) (Right exp) = error ("got Left: " ++ show got)
 
 prop_rsa_sign_valid fast (RSAMessage _ msg) = (either (const False) (\smsg -> verify msg smsg) $ sign msg) == True
     where
-        verify   = RSA.verify hashDescrSHA1 rsaPublickey
-        sign     = RSA.sign hashDescrSHA1 pk
+        verify   = RSAPKCS15.verify hashDescrSHA1 rsaPublickey
+        sign     = RSAPKCS15.sign hashDescrSHA1 pk
         pk       = if fast then rsaPrivatekey else rsaPrivatekey { RSA.private_p = 0, RSA.private_q = 0 }
 
 prop_rsa_sign_fast_valid = prop_rsa_sign_valid True
@@ -114,10 +130,14 @@ prop_dh_valid (xa, xb) = sa == sb
 
 
 asymEncryptionTests = testGroup "assymmetric cipher encryption"
-    [ testProperty "RSA(PKCS15) (slow)" (prop_rsa_valid False False)
-    , testProperty "RSA(PKCS15) (fast)" (prop_rsa_valid True  False)
-    , testProperty "RSA(PKCS15) (slow+blind)" (prop_rsa_valid False True)
-    , testProperty "RSA(PKCS15) (fast+blind)" (prop_rsa_valid True  True)
+    [ testProperty "RSA(PKCS15) (slow)" (prop_rsa_pkcs15_valid False False)
+    , testProperty "RSA(PKCS15) (fast)" (prop_rsa_pkcs15_valid True  False)
+    , testProperty "RSA(PKCS15) (slow+blind)" (prop_rsa_pkcs15_valid False True)
+    , testProperty "RSA(PKCS15) (fast+blind)" (prop_rsa_pkcs15_valid True  True)
+    , testProperty "RSA(OAEP) (slow)" (prop_rsa_oaep_valid False False)
+    , testProperty "RSA(OAEP) (fast)" (prop_rsa_oaep_valid True  False)
+    , testProperty "RSA(OAEP) (slow+blind)" (prop_rsa_oaep_valid False True)
+    , testProperty "RSA(OAEP) (fast+blind)" (prop_rsa_oaep_valid True  True)
     ]
 
 asymSignatureTests = testGroup "assymmetric cipher signature"
