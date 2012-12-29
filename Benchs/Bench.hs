@@ -18,12 +18,12 @@ right (Left _)  = error "left received"
 main = do
     rng <- makeSystem
     let !bs = B.replicate 32 0
-        !encryptedMsg = (fst . right . PKCS15.encrypt rng rsaPublickey) bs
+        !encryptedMsg = (right . fst . PKCS15.encrypt rng rsaPublickey) bs
         !signedMsg = (right . PKCS15.sign hashDescrSHA1 rsaPrivatekey) bs
         privateKeySlow = rsaPrivatekey { RSA.private_p = 0, RSA.private_q = 0 }
         blinder = 0x123
     defaultMain
-        [ bench "RSA.PKCS15 encrypt" $ nf (fst . right . PKCS15.encrypt rng rsaPublickey) bs
+        [ bench "RSA.PKCS15 encrypt" $ nf (right . fst . PKCS15.encrypt rng rsaPublickey) bs
         , bench "RSA.PKCS15 decrypt(slow)" $ nf (right . PKCS15.decrypt privateKeySlow) encryptedMsg
         , bench "RSA.PKCS15 decrypt(fast)" $ nf (right . PKCS15.decrypt rsaPrivatekey) encryptedMsg
         , bench "RSA.PKCS15 decrypt(slow+blinding)" $ nf (right . PKCS15.decryptWithBlinding blinder privateKeySlow) encryptedMsg

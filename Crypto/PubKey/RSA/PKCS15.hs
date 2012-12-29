@@ -111,10 +111,11 @@ decryptSafer rng pk b =
 -- | encrypt a bytestring using the public key and a CPRG random generator.
 --
 -- the message need to be smaller than the key size - 11
-encrypt :: CPRG g => g -> PublicKey -> ByteString -> Either Error (ByteString, g)
+encrypt :: CPRG g => g -> PublicKey -> ByteString -> (Either Error ByteString, g)
 encrypt rng pk m = do
-    (em, rng') <- pad rng (public_size pk) m
-    return (ep pk em, rng')
+    case pad rng (public_size pk) m of
+        Left err         -> (Left err, rng)
+        Right (em, rng') -> (Right (ep pk em), rng')
 
 -- | just like sign but use an explicit blinding to obfuscate timings
 signWithBlinding :: Integer -> HashDescr -> PrivateKey -> ByteString -> Either Error ByteString

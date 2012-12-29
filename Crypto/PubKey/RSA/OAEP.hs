@@ -4,6 +4,7 @@ module Crypto.PubKey.RSA.OAEP
       OAEPParams(..)
     , defaultOAEPParams
     -- * OAEP encryption and decryption primitives
+    , encryptWithSeed
     , encrypt
     , decrypt
     ) where
@@ -34,17 +35,16 @@ defaultOAEPParams hashF =
                , oaepLabel        = Nothing
                }
 
--- | Encrypt a message using OAEP
-encrypt :: CPRG g
-        => g          -- ^ random number generator.
-        -> OAEPParams -- ^ OAEP params to use for encryption.
-        -> PublicKey  -- ^ Public key.
-        -> ByteString -- ^ Message to encrypt
-        -> Either Error (ByteString, g)
-encrypt g oaep pk msg
-    | k < 2*hashLen+2              = Left InvalidParameters
-    | mLen > k - 2*hashLen-2       = Left MessageTooLong
-    | otherwise                    = Right (ep pk em, g')
+encryptWithSeed :: ByteString
+                -> OAEPParams
+                -> PublicKey
+                -> ByteString
+                -> Either Error ByteString
+encryptWithSeed seed oaep pk msg
+    | k < 2*hashLen+2          = Left InvalidParameters
+    | B.length seed /= hashLen = Left InvalidParameters
+    | mLen > k - 2*hashLen-2   = Left MessageTooLong
+    | otherwise                = Right $ ep pk em
     where -- parameters
           k          = public_size pk
           mLen       = B.length msg
@@ -52,7 +52,6 @@ encrypt g oaep pk msg
           mgf        = (oaepMaskGenAlg oaep) hashF
           labelHash  = hashF $ maybe B.empty id $ oaepLabel oaep
           hashLen    = B.length labelHash
-          (seed, g') = genRandomBytes g hashLen
 
           -- put fields
           ps         = B.replicate (k - mLen - 2*hashLen - 2) 0
@@ -62,6 +61,18 @@ encrypt g oaep pk msg
           seedMask   = mgf maskedDB hashLen
           maskedSeed = B.pack $ B.zipWith xor seed seedMask
           em         = B.concat [B.singleton 0x0,maskedSeed,maskedDB]
+
+-- | Encrypt a message using OAEP
+encrypt :: CPRG g
+        => g          -- ^ random number generator.
+        -> OAEPParams -- ^ OAEP params to use for encryption.
+        -> PublicKey  -- ^ Public key.
+        -> ByteString -- ^ Message to encrypt
+        -> (Either Error ByteString, g)
+encrypt g oaep pk msg = (encryptWithSeed seed oaep pk msg, g')
+    where hashF      = oaepHash oaep
+          hashLen    = B.length (hashF B.empty)
+          (seed, g') = genRandomBytes g hashLen
 
 -- | Decrypt a ciphertext using OAEP
 decrypt :: OAEPParams -- ^ OAEP params to use for decryption.

@@ -78,7 +78,7 @@ prop_rsa_generate_valid (Positive i, RSAMessage msgz) =
     (either Left (RSA.decrypt priv . fst) $ RSA.encrypt rng pub msg) == Right msg
 -}
 prop_rsa_valid fast blinding (RSAMessage blindR msg) =
-    (either Left (doDecrypt pk . fst) $ RSA.encrypt rng rsaPublickey msg) == Right msg
+    (either Left (doDecrypt pk) $ fst $ RSAPKCS15.encrypt rng rsaPublickey msg) == Right msg
     where pk = if fast then rsaPrivatekey else rsaPrivatekey { RSA.private_p = 0, RSA.private_q = 0 }
           doDecrypt = if blinding then RSA.decryptWithBlinding blindR else RSA.decrypt
 
