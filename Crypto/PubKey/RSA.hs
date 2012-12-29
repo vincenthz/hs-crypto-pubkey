@@ -9,27 +9,28 @@ module Crypto.PubKey.RSA
     ( Error(..)
     , PublicKey(..)
     , PrivateKey(..)
+    -- * generation function
+    , generateWith
     , generate
     ) where
 
 import Crypto.Random.API
 import Crypto.Types.PubKey.RSA
-import Crypto.Number.ModArithmetic (inverse)
+import Crypto.Number.ModArithmetic (inverseCoprimes)
 import Crypto.Number.Prime (generatePrime)
 import Crypto.PubKey.RSA.Types
-import Data.Maybe (fromJust)
 
 -- | generate a public key and private key with p and q.
 --
 -- p and q need to be distinct primes numbers.
 --
--- e need to be coprime to (p-1)*(q-1). a small hamming weight results in better performance.
+-- e need to be coprime to phi=(p-1)*(q-1). a small hamming weight results in better performance.
 -- 0x10001 is a popular choice. 3 is popular as well, but proven to not be as secure for some cases.
 generateWith :: (Integer, Integer) -> Int -> Integer -> (PublicKey, PrivateKey)
 generateWith (p,q) size e = (pub,priv)
     where n   = p*q
           phi = (p-1)*(q-1)
-          d   = fromJust $ inverse e phi -- e and phi need to be coprime
+          d   = inverseCoprimes e phi -- e and phi need to be coprime
           pub = PublicKey { public_size = size
                           , public_n    = n
                           , public_e    = e
@@ -40,7 +41,7 @@ generateWith (p,q) size e = (pub,priv)
                             , private_q    = q
                             , private_dP   = d `mod` (p-1)
                             , private_dQ   = d `mod` (q-1)
-                            , private_qinv = fromJust $ inverse q p -- q and p are coprime, so fromJust is safe.
+                            , private_qinv = inverseCoprimes q p -- q and p are coprime
                             }
 
 -- | generate a pair of (private, public) key of size in bytes.
