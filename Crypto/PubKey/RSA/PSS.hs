@@ -89,11 +89,15 @@ verify params pk m s
     | not (B.all (== 0) ps0)              = False
     | b1 /= B.singleton 1                 = False
     | otherwise                           = h == h'
-        where em        = ep pk s
+        where -- parameters
+              hashF     = pssHash params
+              hashLen   = B.length (hashF B.empty)
+              dbLen     = public_size pk - hashLen - 1
               pubBits   = public_size pk * 8 -- to change if public_size is converted in bytes
+              -- unmarshall fields
+              em        = ep pk s
               maskedDB  = B.take (B.length em - hashLen - 1) em
               h         = B.take hashLen $ B.drop (B.length maskedDB) em
-              dbLen     = public_size pk - hashLen - 1
               dbmask    = (pssMaskGenAlg params) hashF h dbLen
               db        = B.pack $ normalizeToKeySize pubBits $ B.zipWith xor maskedDB dbmask
               (ps0,z)   = B.break (== 1) db
@@ -101,8 +105,6 @@ verify params pk m s
               mHash     = hashF m
               m'        = B.concat [B.replicate 8 0,mHash,salt]
               h'        = hashF m'
-              hashF     = pssHash params
-              hashLen   = B.length (hashF B.empty)
 
 normalizeToKeySize :: Int -> [Word8] -> [Word8]
 normalizeToKeySize _    []     = [] -- very unlikely
