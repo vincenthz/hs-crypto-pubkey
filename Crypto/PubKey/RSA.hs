@@ -9,14 +9,17 @@ module Crypto.PubKey.RSA
     ( Error(..)
     , PublicKey(..)
     , PrivateKey(..)
+    , Blinder(..)
     -- * generation function
     , generateWith
     , generate
+    , generateBlinder
     ) where
 
 import Crypto.Random.API
 import Crypto.Types.PubKey.RSA
 import Crypto.Number.ModArithmetic (inverseCoprimes)
+import Crypto.Number.Generate (generateMax)
 import Crypto.Number.Prime (generatePrime)
 import Crypto.PubKey.RSA.Types
 
@@ -57,3 +60,15 @@ generate rng size e = do
         generateQ p h =
             let (q, h') = generatePrime h (8 * (size - (size `div` 2)))
              in if p == q then generateQ p h' else (q, h')
+
+-- | Generate a blinder to use with decryption and signing operation
+--
+-- the unique parameter apart from the random number generator is the
+-- public key value N.
+generateBlinder :: CPRG g
+                => g       -- ^ CPRG to use.
+                -> Integer -- ^ RSA public N parameters.
+                -> (Blinder, g)
+generateBlinder rng n =
+    let (r, rng') = generateMax rng n
+     in (Blinder r (inverseCoprimes r n), rng')

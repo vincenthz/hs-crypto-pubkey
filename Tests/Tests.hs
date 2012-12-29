@@ -37,6 +37,9 @@ withAleasInteger rng (Seed i) f = fst $ f $ reseed (i2osp (if i < 0 then -i else
 withRNG :: Seed -> (Rng -> (a,Rng)) -> a
 withRNG seed f = withAleasInteger rng seed f
 
+--withArbitraryRNG :: (Rng -> (a,Rng)) -> Arbitrary a
+withArbitraryRNG f = arbitrary >>= \seed -> return (withAleasInteger rng seed f)
+
 newtype PositiveSmall = PositiveSmall Integer
                       deriving (Show,Eq)
 
@@ -60,9 +63,9 @@ instance Show Seed where
 instance Arbitrary Seed where
     arbitrary = Seed `fmap` (resize (2^30) (arbitrarySizedIntegral `suchThat` (\x -> x > 2^6 && x < 2^30)))
 
-data RSAMessage = RSAMessage Integer B.ByteString deriving (Show, Eq)
+data RSAMessage = RSAMessage RSA.Blinder B.ByteString deriving (Show, Eq)
 
-data RSAOAEPMessage = RSAOAEPMessage Integer B.ByteString RSAOAEP.OAEPParams
+data RSAOAEPMessage = RSAOAEPMessage RSA.Blinder B.ByteString RSAOAEP.OAEPParams
 
 instance Show RSAOAEPMessage where
     show (RSAOAEPMessage a1 b1 _) = "RSAOAEPMessage " ++ show a1 ++ " " ++ show b1
@@ -77,14 +80,14 @@ instance Arbitrary RSAOAEPMessage where
     arbitrary = do
         let hashLen = B.length (SHA1.hash B.empty)
         sz <- choose (0, 128 - 2*hashLen - 2)
-        blinder <- choose (1, RSA.public_n rsaPublickey - 1)
+        blinder <- withArbitraryRNG (\g -> RSA.generateBlinder g (RSA.public_n rsaPublickey))
         ws <- genBS sz
         return $ RSAOAEPMessage blinder ws (RSAOAEP.defaultOAEPParams SHA1.hash)
 
 instance Arbitrary RSAMessage where
     arbitrary = do
         sz <- choose (0, 128 - 11)
-        blinder <- choose (1, RSA.public_n rsaPublickey - 1)
+        blinder <- withArbitraryRNG (\g -> RSA.generateBlinder g (RSA.public_n rsaPublickey))
         ws <- genBS sz
         return $ RSAMessage blinder ws
 

@@ -31,6 +31,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import Crypto.PubKey.RSA.Prim
 import Crypto.PubKey.RSA.Types
+import Crypto.PubKey.RSA (generateBlinder)
 import Crypto.PubKey.HashDescr
 
 -- | This produce a standard PKCS1.5 padding for encryption
@@ -75,7 +76,7 @@ unpad packed
 -- | decrypt message using the private key using cryptoblinding technique.
 --
 -- the r parameter need to be a randomly generated integer between 1 and N.
-decryptWithBlinding :: Integer    -- ^ Random integer between 1 and N used for blinding
+decryptWithBlinding :: Blinder    -- ^ Blinder to use
                     -> PrivateKey -- ^ RSA private key
                     -> ByteString -- ^ cipher text
                     -> Either Error ByteString
@@ -105,7 +106,7 @@ decryptSafer :: CPRG g
              -> ByteString -- ^ cipher text
              -> (Either Error ByteString, g)
 decryptSafer rng pk b =
-    let (blinder, rng') = generateMax rng $ (private_n pk - 2) + 2
+    let (blinder, rng') = generateBlinder rng (private_n pk)
      in (decryptWithBlinding blinder pk b, rng')
 
 -- | encrypt a bytestring using the public key and a CPRG random generator.
@@ -118,7 +119,7 @@ encrypt rng pk m = do
         Right (em, rng') -> (Right (ep pk em), rng')
 
 -- | just like sign but use an explicit blinding to obfuscate timings
-signWithBlinding :: Integer -> HashDescr -> PrivateKey -> ByteString -> Either Error ByteString
+signWithBlinding :: Blinder -> HashDescr -> PrivateKey -> ByteString -> Either Error ByteString
 signWithBlinding blinder hashDescr pk m = dpWithBlinding blinder pk `fmap` makeSignature hashDescr (private_size pk) m
 
 -- | sign message using private key, a hash and its ASN1 description
@@ -128,7 +129,7 @@ sign hashDescr pk m = dp pk `fmap` makeSignature hashDescr (private_size pk) m
 -- | like sign, except it generates a blinder to obfuscate timings
 signSafer :: CPRG g => g -> HashDescr -> PrivateKey -> ByteString -> (Either Error ByteString, g)
 signSafer rng hashDescr pk m =
-    let (blinder, rng') = generateMax rng $ (private_n pk - 2) + 2
+    let (blinder, rng') = generateBlinder rng (private_n pk)
      in (signWithBlinding blinder hashDescr pk m, rng')
 
 -- | verify message with the signed message

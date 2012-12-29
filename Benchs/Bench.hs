@@ -25,7 +25,7 @@ main = do
         !signedMsgPKCS = (right . PKCS15.sign hashDescrSHA1 rsaPrivatekey) bs
         !signedMsgPSS = (right . fst . PSS.sign rng pssParams rsaPrivatekey) bs
         privateKeySlow = rsaPrivatekey { RSA.private_p = 0, RSA.private_q = 0 }
-        blinder = 0x123
+        !blinder = fst $ generateBlinder rng (RSA.public_n rsaPublickey)
         oaepParams = OAEP.defaultOAEPParams SHA1.hash
         pssParams  = PSS.defaultPSSParamsSHA1
     defaultMain
