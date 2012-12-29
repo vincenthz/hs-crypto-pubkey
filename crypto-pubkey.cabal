@@ -28,13 +28,13 @@ Library
                      Crypto.PubKey.RSA.PKCS15
                      Crypto.PubKey.RSA.OAEP
                      Crypto.PubKey.RSA.PSS
+                     Crypto.PubKey.RSA.Prim
                      Crypto.PubKey.DSA
                      Crypto.PubKey.DH
                      Crypto.PubKey.HashDescr
                      Crypto.PubKey.MaskGenFunction
   other-modules:     Crypto.PubKey.ElGamal
                      Crypto.PubKey.RSA.Types
-                     Crypto.PubKey.RSA.Prim
                      Crypto.PubKey.Internal
   ghc-options:       -Wall -O2
 
