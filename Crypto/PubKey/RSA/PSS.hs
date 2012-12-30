@@ -1,3 +1,10 @@
+-- |
+-- Module      : Crypto.PubKey.RSA.PSS
+-- License     : BSD-style
+-- Maintainer  : Vincent Hanquez <vincent@snarc.org>
+-- Stability   : experimental
+-- Portability : Good
+--
 module Crypto.PubKey.RSA.PSS
     ( PSSParams(..)
     , defaultPSSParams
