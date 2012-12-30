@@ -9,7 +9,6 @@ module Crypto.PubKey.RSA.Prim
     (
     -- * decrypt primitive
       dp
-    , dpWithBlinding
     -- * encrypt primitive
     , ep
     ) where
@@ -48,20 +47,9 @@ dpFastNoBlinder pk c = i2ospOf_ (private_size pk) (m2 + h * (private_q pk))
 -- | Compute the RSA decrypt primitive.
 -- if the p and q numbers are available, then dpFast is used
 -- otherwise, we use dpSlow which only need d and n.
-dp :: PrivateKey -> ByteString -> ByteString
-dp pk
-    | private_p pk /= 0 && private_q pk /= 0 = dpFastNoBlinder pk
-    | otherwise                              = dpSlow pk
-
--- | Compute the RSA decrypt primitive using a blinder
---
--- the blinder is a number between 1 and n,
--- and will be multiplied after exponantiation to e to the message.
--- This is a no-op in term of result, however it provides randomization
--- of the timing.
-dpWithBlinding :: Blinder -> PrivateKey -> ByteString -> ByteString
-dpWithBlinding blinder pk
-    | private_p pk /= 0 && private_q pk /= 0 = dpFast blinder pk
+dp :: Maybe Blinder -> PrivateKey -> ByteString -> ByteString
+dp blinder pk
+    | private_p pk /= 0 && private_q pk /= 0 = maybe dpFastNoBlinder dpFast blinder $ pk
     | otherwise                              = dpSlow pk
 
 -- | Compute the RSA encrypt primitive

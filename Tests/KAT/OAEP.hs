@@ -93,7 +93,7 @@ doEncryptionTest key (i, vector) = testCase (show i) (Right (cipherText vector) 
     where actual = OAEP.encryptWithSeed (seed vector) (OAEP.defaultOAEPParams SHA1.hash) key (message vector) 
 
 doDecryptionTest key (i, vector) = testCase (show i) (Right (message vector) @=? actual)
-    where actual = OAEP.decrypt (OAEP.defaultOAEPParams SHA1.hash) key (cipherText vector)
+    where actual = OAEP.decrypt Nothing (OAEP.defaultOAEPParams SHA1.hash) key (cipherText vector)
 
 oaepTests = testGroup "RSA-OAEP"
     [ testGroup "internal"

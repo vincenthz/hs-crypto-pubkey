@@ -466,7 +466,7 @@ e2 98 c7 bb ce 2e ee 78 2a 19 5a a6 6f e2 d0 73
 -}
 
 doSignTest key (i, vector) = testCase (show i) (Right (signature vector) @=? actual)
-    where actual = PSS.signWithSalt PSS.defaultPSSParamsSHA1 (salt vector) key (message vector) 
+    where actual = PSS.signWithSalt (salt vector) Nothing PSS.defaultPSSParamsSHA1 key (message vector)
 
 doVerifyTest key (i, vector) = testCase (show i) (True @=? actual)
     where actual = PSS.verify PSS.defaultPSSParamsSHA1 (private_pub key) (message vector) (signature vector)

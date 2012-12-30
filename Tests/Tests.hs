@@ -94,12 +94,12 @@ instance Arbitrary RSAMessage where
 prop_rsa_pkcs15_valid fast blinding (RSAMessage blindR msg) =
     (either Left (doDecrypt pk) $ fst $ RSAPKCS15.encrypt rng rsaPublickey msg) == Right msg
     where pk = if fast then rsaPrivatekey else rsaPrivatekey { RSA.private_p = 0, RSA.private_q = 0 }
-          doDecrypt = if blinding then RSAPKCS15.decryptWithBlinding blindR else RSAPKCS15.decrypt
+          doDecrypt = RSAPKCS15.decrypt (if blinding then Just blindR else Nothing)
 
 prop_rsa_oaep_valid fast blinding (RSAOAEPMessage blindR msg oaepParams) =
     (either Left (doDecrypt oaepParams pk) $ fst $ RSAOAEP.encrypt rng oaepParams rsaPublickey msg) `assertEq` Right msg
     where pk        = if fast then rsaPrivatekey else rsaPrivatekey { RSA.private_p = 0, RSA.private_q = 0 }
-          doDecrypt = if blinding then RSAOAEP.decrypt {-WithBlinding blindR-} else RSAOAEP.decrypt
+          doDecrypt = RSAOAEP.decrypt (if blinding then Just blindR else Nothing)
 
 assertEq (Right got) (Right exp) = if got == exp then True else error ("got: " ++ show got ++ "\nexp: " ++ show exp)
 assertEq (Left got) (Right exp) = error ("got Left: " ++ show got)
@@ -107,7 +107,7 @@ assertEq (Left got) (Right exp) = error ("got Left: " ++ show got)
 prop_rsa_sign_valid fast (RSAMessage _ msg) = (either (const False) (\smsg -> verify msg smsg) $ sign msg) == True
     where
         verify   = RSAPKCS15.verify hashDescrSHA1 rsaPublickey
-        sign     = RSAPKCS15.sign hashDescrSHA1 pk
+        sign     = RSAPKCS15.sign Nothing hashDescrSHA1 pk
         pk       = if fast then rsaPrivatekey else rsaPrivatekey { RSA.private_p = 0, RSA.private_q = 0 }
 
 prop_rsa_sign_fast_valid = prop_rsa_sign_valid True

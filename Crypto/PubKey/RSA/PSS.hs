@@ -43,14 +43,15 @@ defaultPSSParamsSHA1 = defaultPSSParams (digestToByteString . (hash :: ByteStrin
 -- | Sign using the PSS parameters and the salt explicitely passed as parameters.
 --
 -- the function ignore SaltLength from the PSS Parameters
-signWithSalt :: PSSParams  -- ^ PSS Parameters to use
-             -> ByteString -- ^ Salt to use
-             -> PrivateKey -- ^ RSA Private Key
-             -> ByteString -- ^ Message to sign
+signWithSalt :: ByteString    -- ^ Salt to use
+             -> Maybe Blinder -- ^ optional blinder to use
+             -> PSSParams     -- ^ PSS Parameters to use
+             -> PrivateKey    -- ^ RSA Private Key
+             -> ByteString    -- ^ Message to sign
              -> Either Error ByteString
-signWithSalt params salt pk m
+signWithSalt salt blinder params pk m
     -- | hashLen          = Left SignatureTooLong
-    | otherwise        = Right $ dp pk em
+    | otherwise        = Right $ dp blinder pk em
     where mHash    = (pssHash params) m
           dbLen    = private_size pk - hashLen - 1
           saltLen  = B.length salt
@@ -68,13 +69,13 @@ signWithSalt params salt pk m
 -- | Sign using the PSS Parameters
 sign :: CPRG g
      => g               -- ^ random generator to use to generate the salt
+     -> Maybe Blinder   -- ^ optional blinder to use
      -> PSSParams       -- ^ PSS Parameters to use
      -> PrivateKey      -- ^ RSA Private Key
      -> ByteString      -- ^ Message to sign
      -> (Either Error ByteString, g)
-sign rng params pk m = (signWithSalt params salt pk m, rng')
-    where
-          (salt,rng') = genRandomBytes rng (pssSaltLength params)
+sign rng blinder params pk m = (signWithSalt salt blinder params pk m, rng')
+    where (salt,rng') = genRandomBytes rng (pssSaltLength params)
 
 -- | Verify a signature using the PSS Parameters
 verify :: PSSParams  -- ^ PSS Parameters to use to verify,

@@ -9,7 +9,6 @@ module Crypto.PubKey.RSA.OAEP
     -- * OAEP decryption
     , decrypt
     , decryptSafer
-    , decryptWithBlinding
     ) where
 
 import Crypto.Random.API
@@ -110,48 +109,32 @@ unpad oaep k em
                                 , pb         == "\x00"
                                 ]
 
--- | Decrypt a ciphertext using OAEP and a predefined blinder.
-decryptWithBlinding :: Blinder    -- ^ Blinder to use
-                    -> OAEPParams -- ^ OAEP params to use for decryption.
-                    -> PrivateKey -- ^ Private key
-                    -> ByteString -- ^ Cipher text
-                    -> Either Error ByteString
-decryptWithBlinding blinder oaep pk cipher
-    | B.length cipher /= k = Left MessageSizeIncorrect
-    | k < 2*hashLen+2      = Left InvalidParameters
-    | otherwise            = unpad oaep (private_size pk) $ dpWithBlinding blinder pk cipher
-    where -- parameters
-          k          = private_size pk
-          hashF      = oaepHash oaep
-          hashLen    = B.length (hashF B.empty)
-
 -- | Decrypt a ciphertext using OAEP
 --
--- Use this method only when the decryption is not in a context where an attacker
--- could gain information from the timing of the operation. In this context use
--- decryptWithBlinding or decryptSafer.
-decrypt :: OAEPParams -- ^ OAEP params to use for decryption.
-        -> PrivateKey -- ^ Private key
-        -> ByteString -- ^ Cipher text
+-- When the signature is not in a context where an attacker could gain
+-- information from the timing of the operation, the blinder can be set to None.
+--
+-- If unsure always set a blinder or use decryptSafer
+decrypt :: Maybe Blinder -- ^ Optional blinder
+        -> OAEPParams    -- ^ OAEP params to use for decryption
+        -> PrivateKey    -- ^ Private key
+        -> ByteString    -- ^ Cipher text
         -> Either Error ByteString
-decrypt oaep pk cipher
+decrypt blinder oaep pk cipher
     | B.length cipher /= k = Left MessageSizeIncorrect
     | k < 2*hashLen+2      = Left InvalidParameters
-    | otherwise            = unpad oaep (private_size pk) $ dp pk cipher
+    | otherwise            = unpad oaep (private_size pk) $ dp blinder pk cipher
     where -- parameters
           k          = private_size pk
           hashF      = oaepHash oaep
           hashLen    = B.length (hashF B.empty)
 
--- | Decrypt a ciphertext using OAEP and by generating a blinder.
---
--- try harder in hiding timing of the decryption operation with uses the
--- secret part of the key.
+-- | Decrypt a ciphertext using OAEP and by automatically generating a blinder.
 decryptSafer :: CPRG g
              => g          -- ^ random number generator
              -> OAEPParams -- ^ OAEP params to use for decryption
              -> PrivateKey -- ^ Private key
              -> ByteString -- ^ Cipher text
              -> (Either Error ByteString, g)
-decryptSafer rng oaep pk cipher = (decryptWithBlinding blinder oaep pk cipher, rng')
+decryptSafer rng oaep pk cipher = (decrypt (Just blinder) oaep pk cipher, rng')
     where (blinder, rng') = generateBlinder rng (private_n pk)

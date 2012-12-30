@@ -15,17 +15,14 @@ module Crypto.PubKey.RSA.PKCS15
     -- * private key operations
     , decrypt
     , decryptSafer
-    , decryptWithBlinding
     , sign
     , signSafer
-    , signWithBlinding
     -- * public key operations
     , encrypt
     , verify
     ) where
 
 import Crypto.Random.API
-import Crypto.Number.Generate (generateMax)
 import Crypto.Types.PubKey.RSA
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -73,33 +70,21 @@ unpad packed
         (z, m)       = B.splitAt 1 zm
         signal_error = zt /= "\x00\x02" || z /= "\x00" || (B.length ps < 8)
 
--- | decrypt message using the private key using cryptoblinding technique.
---
--- the r parameter need to be a randomly generated integer between 1 and N.
-decryptWithBlinding :: Blinder    -- ^ Blinder to use
-                    -> PrivateKey -- ^ RSA private key
-                    -> ByteString -- ^ cipher text
-                    -> Either Error ByteString
-decryptWithBlinding r pk c
-    | B.length c /= (private_size pk) = Left MessageSizeIncorrect
-    | otherwise                       = unpad $ dpWithBlinding r pk c
-
 -- | decrypt message using the private key.
--- Use this method only when the decryption is not in a context where an attacker
--- could gain information from the timing of the operation. In this context use
--- decryptWithBlinding or decryptSafer.
 --
-decrypt :: PrivateKey -- ^ RSA private key
-        -> ByteString -- ^ cipher text
+-- When the decryption is not in a context where an attacker could gain
+-- information from the timing of the operation, the blinder can be set to None.
+--
+-- If unsure always set a blinder or use decryptSafer
+decrypt :: Maybe Blinder -- ^ optional blinder
+        -> PrivateKey    -- ^ RSA private key
+        -> ByteString    -- ^ cipher text
         -> Either Error ByteString
-decrypt pk c
+decrypt blinder pk c
     | B.length c /= (private_size pk) = Left MessageSizeIncorrect
-    | otherwise                       = unpad $ dp pk c
+    | otherwise                       = unpad $ dp blinder pk c
 
--- | decrypt message using the private key and by generating a blinder.
---
--- try harder in hiding timing of the decryption operation with uses the
--- secret part of the key.
+-- | decrypt message using the private key and by automatically generating a blinder.
 decryptSafer :: CPRG g
              => g          -- ^ random generator
              -> PrivateKey -- ^ RSA private key
@@ -107,7 +92,7 @@ decryptSafer :: CPRG g
              -> (Either Error ByteString, g)
 decryptSafer rng pk b =
     let (blinder, rng') = generateBlinder rng (private_n pk)
-     in (decryptWithBlinding blinder pk b, rng')
+     in (decrypt (Just blinder) pk b, rng')
 
 -- | encrypt a bytestring using the public key and a CPRG random generator.
 --
@@ -118,19 +103,29 @@ encrypt rng pk m = do
         Left err         -> (Left err, rng)
         Right (em, rng') -> (Right (ep pk em), rng')
 
--- | just like sign but use an explicit blinding to obfuscate timings
-signWithBlinding :: Blinder -> HashDescr -> PrivateKey -> ByteString -> Either Error ByteString
-signWithBlinding blinder hashDescr pk m = dpWithBlinding blinder pk `fmap` makeSignature hashDescr (private_size pk) m
-
 -- | sign message using private key, a hash and its ASN1 description
-sign :: HashDescr -> PrivateKey -> ByteString -> Either Error ByteString
-sign hashDescr pk m = dp pk `fmap` makeSignature hashDescr (private_size pk) m
+--
+-- When the signature is not in a context where an attacker could gain
+-- information from the timing of the operation, the blinder can be set to None.
+--
+-- If unsure always set a blinder or use signSafer
+sign :: Maybe Blinder -- ^ optional blinder
+     -> HashDescr     -- ^ hash descriptor
+     -> PrivateKey    -- ^ private key
+     -> ByteString    -- ^ message to sign
+     -> Either Error ByteString
+sign blinder hashDescr pk m = dp blinder pk `fmap` makeSignature hashDescr (private_size pk) m
 
--- | like sign, except it generates a blinder to obfuscate timings
-signSafer :: CPRG g => g -> HashDescr -> PrivateKey -> ByteString -> (Either Error ByteString, g)
+-- | sign message using the private key and by automatically generating a blinder.
+signSafer :: CPRG g
+          => g          -- ^ random generator
+          -> HashDescr  -- ^ Hash descriptor
+          -> PrivateKey -- ^ private key
+          -> ByteString -- ^ message to sign
+          -> (Either Error ByteString, g)
 signSafer rng hashDescr pk m =
     let (blinder, rng') = generateBlinder rng (private_n pk)
-     in (signWithBlinding blinder hashDescr pk m, rng')
+     in (sign (Just blinder) hashDescr pk m, rng')
 
 -- | verify message with the signed message
 verify :: HashDescr -> PublicKey -> ByteString -> ByteString -> Bool
