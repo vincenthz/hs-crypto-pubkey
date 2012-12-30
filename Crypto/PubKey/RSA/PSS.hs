@@ -50,10 +50,11 @@ signWithSalt :: ByteString    -- ^ Salt to use
              -> ByteString    -- ^ Message to sign
              -> Either Error ByteString
 signWithSalt salt blinder params pk m
-    -- | hashLen          = Left SignatureTooLong
-    | otherwise        = Right $ dp blinder pk em
+    | k < hashLen + saltLen + 2 = Left InvalidParameters
+    | otherwise                 = Right $ dp blinder pk em
     where mHash    = (pssHash params) m
-          dbLen    = private_size pk - hashLen - 1
+          k        = private_size pk
+          dbLen    = k - hashLen - 1
           saltLen  = B.length salt
           hashLen  = B.length (hashF B.empty)
           hashF    = pssHash params
