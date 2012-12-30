@@ -114,8 +114,7 @@ prop_rsa_sign_fast_valid = prop_rsa_sign_valid True
 prop_rsa_sign_slow_valid = prop_rsa_sign_valid False
 
 prop_dsa_valid (RSAMessage _ msg) = DSA.verify (SHA1.hash) dsaPublickey signature msg
-    where
-        (signature, rng') = DSA.sign rng (SHA1.hash) dsaPrivatekey msg
+    where (signature, rng') = DSA.sign rng dsaPrivatekey (SHA1.hash) msg
 
 instance Arbitrary DH.PrivateNumber where
     arbitrary = fromIntegral <$> (suchThat (arbitrary :: Gen Integer) (\x -> x >= 1))

@@ -11,7 +11,10 @@ module Crypto.PubKey.DSA
     , Signature
     , PublicKey(..)
     , PrivateKey(..)
+    -- * signature primitive
     , sign
+    , signWith
+    -- * verification primitive
     , verify
     ) where
 
@@ -24,22 +27,32 @@ import Crypto.Number.Generate
 import Crypto.Types.PubKey.DSA
 import Crypto.PubKey.HashDescr
 
+-- | sign message using the private key and an explicit k number.
+signWith :: Integer         -- ^ k random number
+         -> PrivateKey      -- ^ private key
+         -> HashFunction    -- ^ hash function
+         -> ByteString      -- ^ message to sign
+         -> Maybe Signature
+signWith k pk hash msg
+    | r == 0 || s == 0  = Nothing
+    | otherwise         = Just (r,s)
+    where -- parameters
+          (p,g,q)   = private_params pk
+          x         = private_x pk
+          -- compute r,s
+          kInv      = fromJust $ inverse k q
+          hm        = os2ip $ hash msg
+          r         = expmod g k p `mod` q
+          s         = (kInv * (hm + x * r)) `mod` q
 
-{-| sign message using the private key. -}
-sign :: CPRG g => g -> HashFunction -> PrivateKey -> ByteString -> (Signature, g)
-sign rng hash pk m =
-    let (k, rng') = generateMax rng q
-        kinv      = fromJust $ inverse k q
-        r         = expmod g k p `mod` q
-        s         = (kinv * (hm + x * r)) `mod` q
-    -- Recalculate the signature in the unlikely case that r = 0 or s = 0
-     in if r == 0 || s == 0
-                then sign rng' hash pk m
-                else ((r, s), rng')
-    where
-        (p,g,q)   = private_params pk
-        x         = private_x pk
-        hm        = os2ip $ hash m
+-- | sign message using the private key.
+sign :: CPRG g => g -> PrivateKey -> HashFunction -> ByteString -> (Signature, g)
+sign rng pk hash msg =
+    case signWith k pk hash msg of
+        Nothing  -> sign rng' pk hash msg
+        Just sig -> (sig, rng')
+    where (_,_,q)   = private_params pk
+          (k, rng') = generateMax rng q
 
 -- | verify a bytestring using the public key.
 verify :: HashFunction -> PublicKey -> Signature -> ByteString -> Bool
