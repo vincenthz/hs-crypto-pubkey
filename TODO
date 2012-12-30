@@ -1,0 +1,17 @@
+* signature & verification functions to take a pre-computed digest
+	introduce a new "DigestedMessage" type that either is a digest or a message in some different form.
+	message could be a strict bytestring or lazy bytestring this way.
+
+* ECDSA
+
+* ECC ECDH & ECC ElGamal
+	http://tools.ietf.org/html/rfc6090
+
+* KATs for RSA PKCS15
+
+* KATs for ElGamal
+
+* encryption scheme for ElGamal
+
+* support for non-multiple-of-8 RSA keys.
+	need to change crypto-pubkey-types to use bits instead of bytes.
