@@ -18,6 +18,7 @@ import qualified Crypto.Hash.SHA1 as SHA1
 
 import KAT.OAEP
 import KAT.PSS
+import KAT.DSA
 
 data VectorMgf = VectorMgf { seed :: ByteString
                            , dbMask :: ByteString
@@ -37,4 +38,5 @@ katTests =
     [ testGroup "MGF1" $ map doMGFTest (zip [0..] vectorsMGF)
     , pssTests
     , oaepTests
+    , dsaTests
     ]
