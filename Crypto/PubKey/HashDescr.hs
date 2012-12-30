@@ -1,4 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
+-- |
+-- Module      : Crypto.PubKey.HashDescr
+-- License     : BSD-style
+-- Maintainer  : Vincent Hanquez <vincent@snarc.org>
+-- Stability   : experimental
+-- Portability : Good
+--
 module Crypto.PubKey.HashDescr
     ( HashFunction
     , HashDescr(..)
