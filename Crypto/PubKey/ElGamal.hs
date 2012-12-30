@@ -95,13 +95,13 @@ decrypt (p,_) (PrivateNumber a) (c1,c2) = (c2 * sm1) `mod` p
 -- with some appropriate value of k, the signature generation can fail,
 -- and no signature is returned. User of this function need to retry
 -- with a different k value.
-signWithK :: Integer         -- ^ random number k, between 0 and p-1 and gcd(k,p-1)=1
-          -> Params          -- ^ DH params (p,g)
-          -> PrivateNumber   -- ^ DH private key
-          -> HashFunction    -- ^ collision resistant hash function
-          -> ByteString      -- ^ message to sign
-          -> Maybe Signature
-signWithK k (p,g) (PrivateNumber x) hashF msg
+signWith :: Integer         -- ^ random number k, between 0 and p-1 and gcd(k,p-1)=1
+         -> Params          -- ^ DH params (p,g)
+         -> PrivateNumber   -- ^ DH private key
+         -> HashFunction    -- ^ collision resistant hash function
+         -> ByteString      -- ^ message to sign
+         -> Maybe Signature
+signWith k (p,g) (PrivateNumber x) hashF msg
     | k >= p-1 || d > 1 = Nothing -- gcd(k,p-1) is not 1
     | s == 0            = Nothing
     | otherwise         = Just $ Signature (r,s)
@@ -125,7 +125,7 @@ sign :: CPRG g
      -> (Signature, g)
 sign rng params@(p,_) priv hashF msg =
     let (k, rng') = generateMax rng (p-1)
-     in case signWithK k params priv hashF msg of
+     in case signWith k params priv hashF msg of
              Nothing  -> sign rng' params priv hashF msg
              Just sig -> (sig, rng')
 
