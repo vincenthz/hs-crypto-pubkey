@@ -17,13 +17,18 @@ module Crypto.PubKey.ElGamal
     , PrivateNumber
     , EphemeralKey(..)
     , SharedKey
+    , Signature
+    -- * generation
     , generatePrivate
     , generatePublic
+    -- * encryption and decryption with no scheme
     , encryptWith
     , encrypt
     , decrypt
-    , signWithK
+    -- * signature primitives
+    , signWith
     , sign
+    -- * verification primitives
     , verify
     ) where
 
@@ -38,8 +43,10 @@ import Control.Arrow (first)
 import Data.Maybe (fromJust)
 import Crypto.PubKey.HashDescr (HashFunction)
 
+-- | ElGamal Signature
 data Signature = Signature (Integer, Integer)
 
+-- | ElGamal Ephemeral key. also called Temporary key.
 newtype EphemeralKey = EphemeralKey Integer
 
 -- | generate a private number with no specific property
