@@ -60,15 +60,14 @@ verify hash pk (r,s) m
     -- Reject the signature if either 0 < r < q or 0 < s < q is not satisfied.
     | r <= 0 || r >= q || s <= 0 || s >= q = False
     | otherwise                            = v == r
-    where
-        (p,g,q) = public_params pk
-        y       = public_y pk
-        hm      = os2ip $ hash m
+    where (p,g,q) = public_params pk
+          y       = public_y pk
+          hm      = os2ip $ hash m
 
-        w       = fromJust $ inverse s q
-        u1      = (hm*w) `mod` q
-        u2      = (r*w) `mod` q
-        v       = ((expmod g u1 p) * (expmod y u2 p)) `mod` p `mod` q
+          w       = fromJust $ inverse s q
+          u1      = (hm*w) `mod` q
+          u2      = (r*w) `mod` q
+          v       = ((expmod g u1 p) * (expmod y u2 p)) `mod` p `mod` q
 
 expmod :: Integer -> Integer -> Integer -> Integer
 expmod = exponantiation
