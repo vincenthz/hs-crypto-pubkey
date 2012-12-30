@@ -1,6 +1,11 @@
 Name:                crypto-pubkey
 Version:             0.1.0
-Description:         Public Key cryptography
+Description:
+    Public Key cryptography
+    .
+    Supports RSA PKCS15, RSA OAEP, RSA PSS, DSA, ElGamal signature.
+    .
+    Also have primitive support for Diffie Hellman, and ElGamal encryption
 License:             BSD3
 License-file:        LICENSE
 Copyright:           Vincent Hanquez <vincent@snarc.org>
