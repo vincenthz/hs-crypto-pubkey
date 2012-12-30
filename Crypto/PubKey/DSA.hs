@@ -7,8 +7,7 @@
 --
 
 module Crypto.PubKey.DSA
-    ( Error(..)
-    , Params
+    ( Params
     , Signature
     , PublicKey(..)
     , PrivateKey(..)
@@ -25,9 +24,6 @@ import Crypto.Number.Generate
 import Crypto.Types.PubKey.DSA
 import Crypto.PubKey.HashDescr
 
-data Error = 
-      InvalidSignature          -- ^ signature is not valid r or s is not between the bound 0..q
-    deriving (Show,Eq)
 
 {-| sign message using the private key. -}
 sign :: CPRG g => g -> HashFunction -> PrivateKey -> ByteString -> (Signature, g)
@@ -45,12 +41,12 @@ sign rng hash pk m =
         x         = private_x pk
         hm        = os2ip $ hash m
 
-{- | verify a bytestring using the public key. -}
-verify :: Signature -> HashFunction -> PublicKey -> ByteString -> Either Error Bool
-verify (r,s) hash pk m
-    -- Reject the signature if either 0 < r <q or 0 < s < q is not satisfied.
-    | r <= 0 || r >= q || s <= 0 || s >= q = Left InvalidSignature
-    | otherwise                            = Right $ v == r
+-- | verify a bytestring using the public key.
+verify :: HashFunction -> PublicKey -> Signature -> ByteString -> Bool
+verify hash pk (r,s) m
+    -- Reject the signature if either 0 < r < q or 0 < s < q is not satisfied.
+    | r <= 0 || r >= q || s <= 0 || s >= q = False
+    | otherwise                            = v == r
     where
         (p,g,q) = public_params pk
         y       = public_y pk

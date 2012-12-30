@@ -113,10 +113,7 @@ prop_rsa_sign_valid fast (RSAMessage _ msg) = (either (const False) (\smsg -> ve
 prop_rsa_sign_fast_valid = prop_rsa_sign_valid True
 prop_rsa_sign_slow_valid = prop_rsa_sign_valid False
 
-prop_dsa_valid (RSAMessage _ msg) =
-    case DSA.verify signature (SHA1.hash) dsaPublickey msg of
-        Left err -> False
-        Right b  -> b
+prop_dsa_valid (RSAMessage _ msg) = DSA.verify (SHA1.hash) dsaPublickey signature msg
     where
         (signature, rng') = DSA.sign rng (SHA1.hash) dsaPrivatekey msg
 
