@@ -75,7 +75,7 @@ encrypt :: CPRG g
 encrypt g oaep pk msg = (encryptWithSeed seed oaep pk msg, g')
     where hashF      = oaepHash oaep
           hashLen    = B.length (hashF B.empty)
-          (seed, g') = genRandomBytes g hashLen
+          (seed, g') = genRandomBytes hashLen g
 
 -- | un-pad a OAEP encoded message.
 --

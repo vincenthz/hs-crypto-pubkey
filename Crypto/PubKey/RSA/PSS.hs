@@ -83,7 +83,7 @@ sign :: CPRG g
      -> ByteString      -- ^ Message to sign
      -> (Either Error ByteString, g)
 sign rng blinder params pk m = (signWithSalt salt blinder params pk m, rng')
-    where (salt,rng') = genRandomBytes rng (pssSaltLength params)
+    where (salt,rng') = genRandomBytes (pssSaltLength params) rng
 
 -- | Verify a signature using the PSS Parameters
 verify :: PSSParams  -- ^ PSS Parameters to use to verify,
