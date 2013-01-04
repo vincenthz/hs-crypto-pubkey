@@ -23,6 +23,7 @@ module Crypto.PubKey.RSA.PKCS15
     ) where
 
 import Crypto.Random.API
+import Crypto.PubKey.Internal (and')
 import Crypto.Types.PubKey.RSA
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
@@ -62,13 +63,16 @@ padSignature klen signature
 -- | Try to remove a standard PKCS1.5 encryption padding.
 unpad :: ByteString -> Either Error ByteString
 unpad packed
-    | signal_error = Left MessageNotRecognized
-    | otherwise    = Right m
+    | paddingSuccess = Right m
+    | otherwise      = Left MessageNotRecognized
     where
         (zt, ps0m)   = B.splitAt 2 packed
         (ps, zm)     = B.span (/= 0) ps0m
         (z, m)       = B.splitAt 1 zm
-        signal_error = zt /= "\x00\x02" || z /= "\x00" || (B.length ps < 8)
+        paddingSuccess = and' [ zt == "\x00\x02"
+                              , z  == "\x00"
+                              , B.length ps >= 8
+                              ]
 
 -- | decrypt message using the private key.
 --
