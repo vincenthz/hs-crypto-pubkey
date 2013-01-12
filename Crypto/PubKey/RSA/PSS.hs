@@ -12,6 +12,7 @@ module Crypto.PubKey.RSA.PSS
     -- * Sign and verify functions
     , signWithSalt
     , sign
+    , signSafer
     , verify
     ) where
 
@@ -21,6 +22,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import Crypto.PubKey.RSA.Prim
 import Crypto.PubKey.RSA.Types
+import Crypto.PubKey.RSA (generateBlinder)
 import Crypto.PubKey.HashDescr
 import Crypto.PubKey.MaskGenFunction
 import Crypto.Hash
@@ -84,6 +86,16 @@ sign :: CPRG g
      -> (Either Error ByteString, g)
 sign rng blinder params pk m = (signWithSalt salt blinder params pk m, rng')
     where (salt,rng') = genRandomBytes (pssSaltLength params) rng
+
+-- | Sign using the PSS Parameters and an automatically generated blinder.
+signSafer :: CPRG g
+          => g          -- ^ random generator
+          -> PSSParams  -- ^ PSS Parameters to use
+          -> PrivateKey -- ^ private key
+          -> ByteString -- ^ message to sign
+          -> (Either Error ByteString, g)
+signSafer rng params pk m = sign rng' (Just blinder) params pk m
+    where (blinder, rng') = generateBlinder rng (private_n pk)
 
 -- | Verify a signature using the PSS Parameters
 verify :: PSSParams  -- ^ PSS Parameters to use to verify,
