@@ -74,4 +74,4 @@ Benchmark bench-crypto-pubkey
 
 source-repository head
   type:     git
-  location: git://github.com/vincenthz/hs-cryptocipher
+  location: git://github.com/vincenthz/hs-crypto-pubkey
