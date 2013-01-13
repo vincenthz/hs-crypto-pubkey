@@ -16,6 +16,7 @@ module Crypto.PubKey.HashDescr
     , hashDescrSHA256
     , hashDescrSHA384
     , hashDescrSHA512
+    , hashDescrRIPEMD160
     ) where
 
 import Data.ByteString (ByteString)
@@ -72,6 +73,12 @@ hashDescrSHA512 :: HashDescr
 hashDescrSHA512 =
     HashDescr { hashFunction = digestToByteString . (hash :: ByteString -> Digest SHA512)
               , digestToASN1 = toHashWithInfo "\x30\x51\x30\x0d\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x03\x05\x00\x04\x40"
+              }
+
+hashDescrRIPEMD160 :: HashDescr
+hashDescrRIPEMD160 =
+    HashDescr { hashFunction = digestToByteString . (hash :: ByteString -> Digest RIPEMD160)
+              , digestToASN1 = toHashWithInfo "\x30\x21\x30\x09\x06\x05\x2b\x24\x03\x02\x01\x05\x00\x04\x14"
               }
 
 -- | Generate the marshalled structure with the following ASN1 structure:
