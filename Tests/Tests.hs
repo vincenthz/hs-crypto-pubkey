@@ -125,7 +125,7 @@ prop_dh_valid (xa, xb) = sa == sb
         sb = DH.getShared dhparams xb ya
         yb = DH.generatePublic dhparams xb
         ya = DH.generatePublic dhparams xa
-        dhparams = (11, 7)
+        dhparams = DH.Params { DH.params_p = 11, DH.params_g = 7 }
 
 
 asymEncryptionTests = testGroup "assymmetric cipher encryption"

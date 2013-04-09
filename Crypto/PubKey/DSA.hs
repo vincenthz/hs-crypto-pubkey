@@ -7,7 +7,7 @@
 --
 
 module Crypto.PubKey.DSA
-    ( Params
+    ( Params(..)
     , Signature
     , PublicKey(..)
     , PrivateKey(..)
@@ -37,7 +37,7 @@ signWith k pk hash msg
     | r == 0 || s == 0  = Nothing
     | otherwise         = Just (r,s)
     where -- parameters
-          (p,g,q)   = private_params pk
+          (Params p g q) = private_params pk
           x         = private_x pk
           -- compute r,s
           kInv      = fromJust $ inverse k q
@@ -51,7 +51,7 @@ sign rng pk hash msg =
     case signWith k pk hash msg of
         Nothing  -> sign rng' pk hash msg
         Just sig -> (sig, rng')
-    where (_,_,q)   = private_params pk
+    where (Params _ _ q) = private_params pk
           (k, rng') = generateMax rng q
 
 -- | verify a bytestring using the public key.
@@ -60,7 +60,7 @@ verify hash pk (r,s) m
     -- Reject the signature if either 0 < r < q or 0 < s < q is not satisfied.
     | r <= 0 || r >= q || s <= 0 || s >= q = False
     | otherwise                            = v == r
-    where (p,g,q) = public_params pk
+    where (Params p g q) = public_params pk
           y       = public_y pk
           hm      = os2ip $ hash m
 

@@ -66,12 +66,12 @@ generateEphemeral rng q = first toEphemeral $ generatePrivate rng q
 -- | generate a public number that is for the other party benefits.
 -- this number is usually called h=g^a
 generatePublic :: Params -> PrivateNumber -> PublicNumber
-generatePublic (p,g) (PrivateNumber a) = PublicNumber $ exponantiation g a p
+generatePublic (Params p g) (PrivateNumber a) = PublicNumber $ exponantiation g a p
 
 -- | encrypt with a specified ephemeral key
 -- do not reuse ephemeral key.
 encryptWith :: EphemeralKey -> Params -> PublicNumber -> Integer -> (Integer,Integer)
-encryptWith (EphemeralKey b) (p,g) (PublicNumber h) m = (c1,c2)
+encryptWith (EphemeralKey b) (Params p g) (PublicNumber h) m = (c1,c2)
     where s  = exponantiation h b p
           c1 = exponantiation g b p
           c2 = (s * m) `mod` p
@@ -79,12 +79,12 @@ encryptWith (EphemeralKey b) (p,g) (PublicNumber h) m = (c1,c2)
 -- | encrypt a message using params and public keys
 -- will generate b (called the ephemeral key)
 encrypt :: CPRG g => g -> Params -> PublicNumber -> Integer -> ((Integer,Integer), g)
-encrypt rng params@(p,_) public m = first (\b -> encryptWith b params public m) $ generateEphemeral rng q
+encrypt rng params@(Params p _) public m = first (\b -> encryptWith b params public m) $ generateEphemeral rng q
     where q = p-1 -- p is prime, hence order of the group is p-1
 
 -- | decrypt message
 decrypt :: Params -> PrivateNumber -> (Integer, Integer) -> Integer
-decrypt (p,_) (PrivateNumber a) (c1,c2) = (c2 * sm1) `mod` p
+decrypt (Params p _) (PrivateNumber a) (c1,c2) = (c2 * sm1) `mod` p
     where s   = exponantiation c1 a p
           sm1 = fromJust $ inverse s p -- always inversible in Zp
 
@@ -101,7 +101,7 @@ signWith :: Integer         -- ^ random number k, between 0 and p-1 and gcd(k,p-
          -> HashFunction    -- ^ collision resistant hash function
          -> ByteString      -- ^ message to sign
          -> Maybe Signature
-signWith k (p,g) (PrivateNumber x) hashF msg
+signWith k (Params p g) (PrivateNumber x) hashF msg
     | k >= p-1 || d > 1 = Nothing -- gcd(k,p-1) is not 1
     | s == 0            = Nothing
     | otherwise         = Just $ Signature (r,s)
@@ -123,7 +123,7 @@ sign :: CPRG g
      -> HashFunction   -- ^ collision resistant hash function
      -> ByteString     -- ^ message to sign
      -> (Signature, g)
-sign rng params@(p,_) priv hashF msg =
+sign rng params@(Params p _) priv hashF msg =
     let (k, rng') = generateMax rng (p-1)
      in case signWith k params priv hashF msg of
              Nothing  -> sign rng' params priv hashF msg
@@ -136,7 +136,7 @@ verify :: Params
        -> ByteString
        -> Signature
        -> Bool
-verify (p,g) (PublicNumber y) hashF msg (Signature (r,s))
+verify (Params p g) (PublicNumber y) hashF msg (Signature (r,s))
     | or [r <= 0,r >= p,s <= 0,s >= (p-1)] = False
     | otherwise                            = lhs == rhs
     where h   = os2ip $ hashF msg

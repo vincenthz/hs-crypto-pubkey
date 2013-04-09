@@ -8,7 +8,7 @@
 -- Portability : Good
 --
 module Crypto.PubKey.DH
-    ( Params
+    ( Params(..)
     , PublicNumber
     , PrivateNumber
     , SharedKey
@@ -29,7 +29,7 @@ import Control.Arrow (first)
 -- we generate a safe prime (a prime number of the form 2p+1 where p is also prime)
 generateParams :: CPRG g => g -> Int -> Integer -> (Params, g)
 generateParams rng bits generator =
-    first (\p -> (p, generator)) $ generateSafePrime rng bits
+    first (\p -> Params p generator) $ generateSafePrime rng bits
 
 -- | generate a private number with no specific property
 -- this number is usually called X in DH text.
@@ -39,8 +39,8 @@ generatePrivate rng bits = first PrivateNumber $ generateOfSize rng bits
 -- | generate a public number that is for the other party benefits.
 -- this number is usually called Y in DH text.
 generatePublic :: Params -> PrivateNumber -> PublicNumber
-generatePublic (p,g) (PrivateNumber x) = PublicNumber $ exponantiation g x p
+generatePublic (Params p g) (PrivateNumber x) = PublicNumber $ exponantiation g x p
 
 -- | generate a shared key using our private number and the other party public number
 getShared :: Params -> PrivateNumber -> PublicNumber -> SharedKey
-getShared (p,_) (PrivateNumber x) (PublicNumber y) = SharedKey $ exponantiation y x p
+getShared (Params p _) (PrivateNumber x) (PublicNumber y) = SharedKey $ exponantiation y x p

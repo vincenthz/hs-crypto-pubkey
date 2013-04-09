@@ -20,7 +20,7 @@ rsaPublickey = RSA.PublicKey
     , RSA.public_e    = 65537
     }
 
-dsaParams = (p,g,q)
+dsaParams = DSA.Params { DSA.params_p = p, DSA.params_g = g, DSA.params_q = q }
     where
         p = 0x00a8c44d7d0bbce69a39008948604b9c7b11951993a5a1a1fa995968da8bb27ad9101c5184bcde7c14fb79f7562a45791c3d80396cefb328e3e291932a17e22edd
         g = 0x0bf9fe6c75d2367b88912b2252d20fdcad06b3f3a234b92863a1e30a96a123afd8e8a4b1dd953e6f5583ef8e48fc7f47a6a1c8f24184c76dba577f0fec2fcd1c

@@ -1,5 +1,5 @@
 Name:                crypto-pubkey
-Version:             0.1.2
+Version:             0.1.3
 Description:
     Public Key cryptography
     .
@@ -28,7 +28,7 @@ Library
   Build-Depends:     base >= 4 && < 5
                    , bytestring
                    , crypto-random-api >= 0.2 && < 0.3
-                   , crypto-pubkey-types >= 0.2 && < 0.3
+                   , crypto-pubkey-types >= 0.3 && < 0.4
                    , cryptohash >= 0.8
                    , crypto-numbers
   Exposed-modules:   Crypto.PubKey.RSA
