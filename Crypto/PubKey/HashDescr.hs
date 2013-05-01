@@ -6,9 +6,14 @@
 -- Stability   : experimental
 -- Portability : Good
 --
+-- Standard digests wrapped in ASN1 structure
+--
 module Crypto.PubKey.HashDescr
-    ( HashFunction
+    (
+    -- * Types
+      HashFunction
     , HashDescr(..)
+    -- * List of known hash description
     , hashDescrMD2
     , hashDescrMD5
     , hashDescrSHA1
@@ -28,8 +33,8 @@ type HashFunction = ByteString -> ByteString
 
 -- | Describe a hash function and a way to wrap the digest into
 -- an DER encoded ASN1 marshalled structure.
-data HashDescr = HashDescr { hashFunction :: HashFunction
-                           , digestToASN1 :: ByteString -> ByteString
+data HashDescr = HashDescr { hashFunction :: HashFunction             -- ^ hash function
+                           , digestToASN1 :: ByteString -> ByteString -- ^ convertion to an ASN1 wrapped digest bytestring
                            }
 
 -- | Describe the MD2 hashing algorithm
@@ -75,6 +80,7 @@ hashDescrSHA512 =
               , digestToASN1 = toHashWithInfo "\x30\x51\x30\x0d\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x03\x05\x00\x04\x40"
               }
 
+-- | Describe the RIPEMD160 hashing algorithm
 hashDescrRIPEMD160 :: HashDescr
 hashDescrRIPEMD160 =
     HashDescr { hashFunction = digestToByteString . (hash :: ByteString -> Digest RIPEMD160)

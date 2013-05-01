@@ -1,3 +1,13 @@
+-- |
+-- Module      : Crypto.PubKey.RSA.OAEP
+-- License     : BSD-style
+-- Maintainer  : Vincent Hanquez <vincent@snarc.org>
+-- Stability   : experimental
+-- Portability : Good
+--
+-- RSA OAEP mode
+-- <http://en.wikipedia.org/wiki/Optimal_asymmetric_encryption_padding>
+--
 {-# LANGUAGE OverloadedStrings #-}
 module Crypto.PubKey.RSA.OAEP
     (
@@ -38,10 +48,11 @@ defaultOAEPParams hashF =
                , oaepLabel        = Nothing
                }
 
-encryptWithSeed :: ByteString
-                -> OAEPParams
-                -> PublicKey
-                -> ByteString
+-- | Encrypt a message using OAEP with a predefined seed.
+encryptWithSeed :: ByteString -- ^ Seed
+                -> OAEPParams -- ^ OAEP params to use for encryption
+                -> PublicKey  -- ^ Public key.
+                -> ByteString -- ^ Message to encrypt
                 -> Either Error ByteString
 encryptWithSeed seed oaep pk msg
     | k < 2*hashLen+2          = Left InvalidParameters
