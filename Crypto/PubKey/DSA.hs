@@ -8,7 +8,7 @@
 
 module Crypto.PubKey.DSA
     ( Params(..)
-    , Signature
+    , Signature(..)
     , PublicKey(..)
     , PrivateKey(..)
     -- * signature primitive
@@ -35,7 +35,7 @@ signWith :: Integer         -- ^ k random number
          -> Maybe Signature
 signWith k pk hash msg
     | r == 0 || s == 0  = Nothing
-    | otherwise         = Just (r,s)
+    | otherwise         = Just $ Signature r s
     where -- parameters
           (Params p g q) = private_params pk
           x         = private_x pk
@@ -56,7 +56,7 @@ sign rng pk hash msg =
 
 -- | verify a bytestring using the public key.
 verify :: HashFunction -> PublicKey -> Signature -> ByteString -> Bool
-verify hash pk (r,s) m
+verify hash pk (Signature r s) m
     -- Reject the signature if either 0 < r < q or 0 < s < q is not satisfied.
     | r <= 0 || r >= q || s <= 0 || s >= q = False
     | otherwise                            = v == r
