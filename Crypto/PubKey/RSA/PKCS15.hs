@@ -43,7 +43,7 @@ pad rng len m
         where {- get random non-null bytes -}
               getNonNullRandom :: CPRG g => g -> Int -> (ByteString, g)
               getNonNullRandom g n =
-                    let (bs0,g') = genRandomBytes n g
+                    let (bs0,g') = cprgGenerate n g
                         bytes    = B.pack $ filter (/= 0) $ B.unpack $ bs0
                         left     = (n - B.length bytes)
                      in if left == 0

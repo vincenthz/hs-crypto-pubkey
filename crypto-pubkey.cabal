@@ -1,5 +1,5 @@
 Name:                crypto-pubkey
-Version:             0.1.4
+Version:             0.2.0
 Description:
     Public Key cryptography
     .
@@ -27,10 +27,11 @@ Flag benchmark
 Library
   Build-Depends:     base >= 4 && < 5
                    , bytestring
-                   , crypto-random-api >= 0.2 && < 0.3
+                   , byteable
+                   , crypto-random >= 0.0 && < 0.1
                    , crypto-pubkey-types >= 0.4 && < 0.5
-                   , cryptohash >= 0.8
-                   , crypto-numbers
+                   , cryptohash >= 0.9.1
+                   , crypto-numbers >= 0.2
   Exposed-modules:   Crypto.PubKey.RSA
                      Crypto.PubKey.RSA.PKCS15
                      Crypto.PubKey.RSA.OAEP
@@ -51,10 +52,11 @@ Test-Suite test-crypto-pubkey
   Main-Is:           Tests.hs
   Build-depends:     base >= 4 && < 5
                    , bytestring
+                   , byteable
                    , cryptohash
                    , crypto-pubkey
                    , crypto-numbers
-                   , crypto-random-api
+                   , crypto-random
                    , QuickCheck >= 2
                    , HUnit
                    , test-framework >= 0.3.3
@@ -67,9 +69,8 @@ Benchmark bench-crypto-pubkey
   type:              exitcode-stdio-1.0
   Build-depends:     base >= 4 && < 5
                    , bytestring
-                   , cprng-aes >= 0.3.0
                    , cryptohash
-                   , crypto-random-api
+                   , crypto-random
                    , crypto-pubkey
                    , criterion
                    , mtl

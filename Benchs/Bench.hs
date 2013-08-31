@@ -10,15 +10,15 @@ import Crypto.PubKey.RSA.PKCS15 as PKCS15
 import Crypto.PubKey.RSA.OAEP as OAEP
 import Crypto.PubKey.RSA.PSS as PSS
 import Crypto.PubKey.HashDescr
+import Crypto.Random
 
-import Crypto.Random.AESCtr
 import qualified Data.ByteString as B
 
 right (Right r) = r
 right (Left _)  = error "left received"
 
 main = do
-    rng <- makeSystem
+    rng <- cprgCreate `fmap` createEntropyPool :: IO SystemRNG
     let !bs = B.replicate 32 0
         !encryptedMsgPKCS = (right . fst . PKCS15.encrypt rng rsaPublickey) bs
         !encryptedMsgOAEP = (right . fst . OAEP.encrypt rng oaepParams rsaPublickey) bs

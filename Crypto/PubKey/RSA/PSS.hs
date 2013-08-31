@@ -19,6 +19,7 @@ module Crypto.PubKey.RSA.PSS
 import Crypto.Random.API
 import Crypto.Types.PubKey.RSA
 import Data.ByteString (ByteString)
+import Data.Byteable
 import qualified Data.ByteString as B
 import Crypto.PubKey.RSA.Prim
 import Crypto.PubKey.RSA.Types
@@ -47,7 +48,7 @@ defaultPSSParams hashF =
 
 -- | Default Params using SHA1 algorithm.
 defaultPSSParamsSHA1 :: PSSParams
-defaultPSSParamsSHA1 = defaultPSSParams (digestToByteString . (hash :: ByteString -> Digest SHA1))
+defaultPSSParamsSHA1 = defaultPSSParams (toBytes . (hash :: ByteString -> Digest SHA1))
 
 -- | Sign using the PSS parameters and the salt explicitely passed as parameters.
 --
@@ -85,7 +86,7 @@ sign :: CPRG g
      -> ByteString      -- ^ Message to sign
      -> (Either Error ByteString, g)
 sign rng blinder params pk m = (signWithSalt salt blinder params pk m, rng')
-    where (salt,rng') = genRandomBytes (pssSaltLength params) rng
+    where (salt,rng') = cprgGenerate (pssSaltLength params) rng
 
 -- | Sign using the PSS Parameters and an automatically generated blinder.
 signSafer :: CPRG g
