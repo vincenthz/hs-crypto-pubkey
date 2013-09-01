@@ -18,7 +18,7 @@ module Crypto.PubKey.RSA
 
 import Crypto.Random.API
 import Crypto.Types.PubKey.RSA
-import Crypto.Number.ModArithmetic (inverseCoprimes)
+import Crypto.Number.ModArithmetic (inverse, inverseCoprimes)
 import Crypto.Number.Generate (generateMax)
 import Crypto.Number.Prime (generatePrime)
 import Crypto.PubKey.RSA.Types
@@ -35,22 +35,29 @@ import Crypto.PubKey.RSA.Types
 --
 -- * e=3 is popular as well, but proven to not be as secure for some cases.
 --
-generateWith :: (Integer, Integer) -> Int -> Integer -> (PublicKey, PrivateKey)
-generateWith (p,q) size e = (pub,priv)
-    where n   = p*q
-          phi = (p-1)*(q-1)
-          d   = inverseCoprimes e phi -- e and phi need to be coprime
-          pub = PublicKey { public_size = size
-                          , public_n    = n
-                          , public_e    = e
-                          }
-          priv = PrivateKey { private_pub  = pub
+generateWith :: (Integer, Integer) -- ^ chosen distinct primes p and q
+             -> Int                -- ^ size in bytes
+             -> Integer            -- ^ RSA public exponant 'e'
+             -> Maybe (PublicKey, PrivateKey)
+generateWith (p,q) size e =
+    case inverse e phi of
+        Nothing -> Nothing
+        Just d  -> Just (pub,priv d)
+  where n   = p*q
+        phi = (p-1)*(q-1)
+        -- q and p should be *distinct* *prime* numbers, hence always coprime
+        qinv = inverseCoprimes q p
+        pub = PublicKey { public_size = size
+                        , public_n    = n
+                        , public_e    = e
+                        }
+        priv d = PrivateKey { private_pub  = pub
                             , private_d    = d
                             , private_p    = p
                             , private_q    = q
                             , private_dP   = d `mod` (p-1)
                             , private_dQ   = d `mod` (q-1)
-                            , private_qinv = inverseCoprimes q p -- q and p are coprime
+                            , private_qinv = qinv
                             }
 
 -- | generate a pair of (private, public) key of size in bytes.
@@ -59,10 +66,12 @@ generate :: CPRG g
          -> Int     -- ^ size in bytes
          -> Integer -- ^ RSA public exponant 'e'
          -> ((PublicKey, PrivateKey), g)
-generate rng size e = do
-    let (pq, rng') = generatePQ rng
-     in (generateWith pq size e, rng')
-    where
+generate rng size e = loop rng
+  where loop g = -- loop until we find a valid key pair given e
+            let (pq, g') = generatePQ g
+             in case generateWith pq size e of
+                    Nothing -> loop g'
+                    Just pp -> (pp, g')
         generatePQ g =
             let (p, g')  = generatePrime g (8 * (size `div` 2))
                 (q, g'') = generateQ p g'
