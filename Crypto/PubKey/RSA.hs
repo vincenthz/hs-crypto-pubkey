@@ -23,12 +23,18 @@ import Crypto.Number.Generate (generateMax)
 import Crypto.Number.Prime (generatePrime)
 import Crypto.PubKey.RSA.Types
 
--- | generate a public key and private key with p and q.
+-- | Generate a key pair given p and q.
 --
--- p and q need to be distinct primes numbers.
+-- p and q need to be distinct prime numbers.
 --
--- e need to be coprime to phi=(p-1)*(q-1). a small hamming weight results in better performance.
--- 0x10001 is a popular choice. 3 is popular as well, but proven to not be as secure for some cases.
+-- e need to be coprime to phi=(p-1)*(q-1). If that's not the
+-- case, the function will not return a key pair.
+-- A small hamming weight results in better performance.
+--
+-- * e=0x10001 is a popular choice
+--
+-- * e=3 is popular as well, but proven to not be as secure for some cases.
+--
 generateWith :: (Integer, Integer) -> Int -> Integer -> (PublicKey, PrivateKey)
 generateWith (p,q) size e = (pub,priv)
     where n   = p*q
@@ -48,7 +54,11 @@ generateWith (p,q) size e = (pub,priv)
                             }
 
 -- | generate a pair of (private, public) key of size in bytes.
-generate :: CPRG g => g -> Int -> Integer -> ((PublicKey, PrivateKey), g)
+generate :: CPRG g
+         => g       -- ^ CPRG
+         -> Int     -- ^ size in bytes
+         -> Integer -- ^ RSA public exponant 'e'
+         -> ((PublicKey, PrivateKey), g)
 generate rng size e = do
     let (pq, rng') = generatePQ rng
      in (generateWith pq size e, rng')
@@ -67,7 +77,7 @@ generate rng size e = do
 -- public key value N.
 generateBlinder :: CPRG g
                 => g       -- ^ CPRG to use.
-                -> Integer -- ^ RSA public N parameters.
+                -> Integer -- ^ RSA public N parameter.
                 -> (Blinder, g)
 generateBlinder rng n =
     let (r, rng') = generateMax rng n
