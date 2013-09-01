@@ -5,6 +5,7 @@
 -- Stability   : experimental
 -- Portability : Good
 --
+-- An implementation of the Digital Signature Algorithm (DSA)
 
 module Crypto.PubKey.DSA
     ( Params(..)
