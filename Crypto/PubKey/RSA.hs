@@ -79,6 +79,5 @@ generateBlinder :: CPRG g
                 => g       -- ^ CPRG to use.
                 -> Integer -- ^ RSA public N parameter.
                 -> (Blinder, g)
-generateBlinder rng n =
-    let (r, rng') = generateMax rng n
-     in (Blinder r (inverseCoprimes r n), rng')
+generateBlinder rng n = (Blinder r (inverseCoprimes r n), rng')
+  where (r, rng') = generateMax rng n
