@@ -43,6 +43,7 @@ Library
                      Crypto.PubKey.MaskGenFunction
                      Crypto.PubKey.ECC.Generate
                      Crypto.PubKey.ECC.Prim
+                     Crypto.PubKey.ECC.ECDSA
   other-modules:     Crypto.PubKey.ElGamal
                      Crypto.PubKey.RSA.Types
                      Crypto.PubKey.Internal
