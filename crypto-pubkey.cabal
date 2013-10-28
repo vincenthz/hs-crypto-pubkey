@@ -41,6 +41,7 @@ Library
                      Crypto.PubKey.DH
                      Crypto.PubKey.HashDescr
                      Crypto.PubKey.MaskGenFunction
+                     Crypto.PubKey.ECC.Generate
                      Crypto.PubKey.ECC.Prim
   other-modules:     Crypto.PubKey.ElGamal
                      Crypto.PubKey.RSA.Types
