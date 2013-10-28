@@ -76,8 +76,10 @@ Benchmark bench-crypto-pubkey
                    , cryptohash
                    , crypto-random
                    , crypto-pubkey
+                   , crypto-pubkey-types
                    , criterion
                    , mtl
+                   , deepseq
 
 source-repository head
   type:     git

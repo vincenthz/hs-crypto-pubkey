@@ -10,12 +10,17 @@ import Crypto.PubKey.RSA.PKCS15 as PKCS15
 import Crypto.PubKey.RSA.OAEP as OAEP
 import Crypto.PubKey.RSA.PSS as PSS
 import Crypto.PubKey.HashDescr
+import Crypto.PubKey.ECC.ECDSA as ECDSA
 import Crypto.Random
+import Control.DeepSeq
 
 import qualified Data.ByteString as B
 
 right (Right r) = r
 right (Left _)  = error "left received"
+
+instance NFData Signature where
+    rnf (Signature r s) = rnf r `seq` rnf s
 
 main = do
     rng <- cprgCreate `fmap` createEntropyPool :: IO SystemRNG
@@ -28,6 +33,8 @@ main = do
         !blinder = fst $ generateBlinder rng (RSA.public_n rsaPublickey)
         oaepParams = OAEP.defaultOAEPParams SHA1.hash
         pssParams  = PSS.defaultPSSParamsSHA1
+        ecdsaSignatureP = fst $ ECDSA.sign rng ecdsaPrivatekeyP SHA1.hash bs
+        ecdsaSignatureB = fst $ ECDSA.sign rng ecdsaPrivatekeyB SHA1.hash bs
     defaultMain
         [ bgroup "RSA PKCS15"
             [ bench "encryption" $ nf (right . fst . PKCS15.encrypt rng rsaPublickey) bs
@@ -62,5 +69,13 @@ main = do
                 , bench "fast+blinding" $ nf (right . fst . PSS.sign rng (Just blinder) pssParams rsaPrivatekey) bs
                 ]
             , bench "verify" $ nf (PSS.verify pssParams rsaPublickey bs) signedMsgPSS
+            ]
+        , bgroup "ECDSA secp160r1"
+            [ bench "sign" $ nf (fst . ECDSA.sign rng ecdsaPrivatekeyP SHA1.hash) bs
+            , bench "verify"  $ nf (ECDSA.verify SHA1.hash ecdsaPublickeyP ecdsaSignatureP) bs
+            ]
+        , bgroup "ECDSA sect163k1"
+            [ bench "sign" $ nf (fst . ECDSA.sign rng ecdsaPrivatekeyB SHA1.hash) bs
+            , bench "verify"  $ nf (ECDSA.verify SHA1.hash ecdsaPublickeyB ecdsaSignatureB) bs
             ]
         ]
