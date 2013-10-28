@@ -58,6 +58,7 @@ Test-Suite test-crypto-pubkey
                    , byteable
                    , cryptohash
                    , crypto-pubkey
+                   , crypto-pubkey-types
                    , crypto-numbers
                    , crypto-random
                    , QuickCheck >= 2

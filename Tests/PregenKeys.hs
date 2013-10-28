@@ -2,6 +2,8 @@ module PregenKeys where
 
 import qualified Crypto.PubKey.RSA as RSA
 import qualified Crypto.PubKey.DSA as DSA
+import qualified Crypto.PubKey.ECC.ECDSA as ECDSA
+import qualified Crypto.Types.PubKey.ECC as ECC
 import qualified Crypto.PubKey.DH as DH
 
 rsaPrivatekey = RSA.PrivateKey
@@ -35,4 +37,22 @@ dsaPublickey = DSA.PublicKey
     { DSA.public_params = dsaParams
     , DSA.public_y      = 0x4fa505e86e32922f1fa1702a120abdba088bb4be801d4c44f7fc6b9094d85cd52c429cbc2b39514e30909b31e2e2e0752b0fc05c1a7d9c05c3e52e49e6edef4c
     }
+
+ecdsaCurveP = ECC.getCurveByName ECC.SEC_p160r1
+
+ecdsaPrivatekeyP = ECDSA.PrivateKey ecdsaCurveP 971761939728640320549601132085879836204587084162
+
+ecdsaPublickeyP = ECDSA.PublicKey
+     ecdsaCurveP
+    (ECC.Point 466448783855397898016055842232266600516272889280
+               1110706324081757720403272427311003102474457754220)
+
+ecdsaCurveB = ECC.getCurveByName ECC.SEC_t163k1
+
+ecdsaPrivatekeyB = ECDSA.PrivateKey ecdsaCurveB 5321230001203043918714616464614664646674949479949
+
+ecdsaPublickeyB = ECDSA.PublicKey
+    ecdsaCurveB
+   (ECC.Point 0x37d529fa37e42195f10111127ffb2bb38644806bc
+              0x447026eee8b34157f3eb51be5185d2be0249ed776)
 
