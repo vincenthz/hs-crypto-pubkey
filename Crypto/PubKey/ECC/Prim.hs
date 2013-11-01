@@ -1,3 +1,6 @@
+-- | Elliptic Curve Arithmetic.
+--
+-- /WARNING:/ These functions are vulnerable to timing attacks.
 module Crypto.PubKey.ECC.Prim
     ( pointAdd
     , pointDouble
@@ -9,7 +12,9 @@ import Crypto.Number.ModArithmetic
 import Crypto.Number.F2m
 import Crypto.Types.PubKey.ECC
 
--- | Elliptic curve point addition.
+-- | Elliptic Curve point addition.
+--
+-- /WARNING:/ Vulnerable to timing attacks.
 pointAdd :: Curve -> Point -> Point -> Point
 pointAdd _ PointO PointO = PointO
 pointAdd _ PointO q = q
@@ -31,7 +36,9 @@ pointAdd c@(CurveF2m (CurveBinary fx cc)) p@(Point xp yp) q@(Point xq yq)
                      return $ Point xr yr
   where a = ecc_a cc
 
--- | Elliptic curve point doubling.
+-- | Elliptic Curve point doubling.
+--
+-- /WARNING:/ Vulnerable to timing attacks.
 pointDouble :: Curve -> Point -> Point
 pointDouble _ PointO = PointO
 pointDouble (CurveFP (CurvePrime pr cc)) (Point xp yp) =
@@ -47,12 +54,15 @@ pointDouble (CurveF2m (CurveBinary fx cc)) (Point xp yp) = fromMaybe PointO $ do
     return $ Point xr yr
   where a = ecc_a cc
 
--- | Elliptic curve point multiplication (double and add).
+-- | Elliptic curve point multiplication (double and add algorithm).
+--
+-- /WARNING:/ Vulnerable to timing attacks.
 pointMul :: Curve -> Integer -> Point -> Point
 pointMul c n p
     | n == 1 = p
     | odd n = pointAdd c p (pointMul c (n - 1) p)
     | otherwise = pointMul c (n `div` 2) (pointDouble c p)
 
+-- | div and mod
 divmod :: Integer -> Integer -> Integer -> Integer
 divmod y x m = y * fromJust (inverse (x `mod` m) m) `mod` m

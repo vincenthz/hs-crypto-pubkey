@@ -1,3 +1,5 @@
+-- | /WARNING:/ Signature operations may leak the private key. Signature verification
+-- should be safe.
 module Crypto.PubKey.ECC.ECDSA
     ( module Crypto.Types.PubKey.ECDSA
     , signWith
@@ -18,6 +20,8 @@ import Crypto.PubKey.HashDescr
 import Crypto.PubKey.ECC.Prim
 
 -- | Sign message using the private key and an explicit k number.
+--
+-- /WARNING:/ Vulnerable to timing attacks.
 signWith :: Integer         -- ^ k random number
          -> PrivateKey      -- ^ private key
          -> HashFunction    -- ^ hash function
@@ -36,6 +40,8 @@ signWith k (PrivateKey curve d) hash msg = do
     return $ Signature r s
 
 -- | Sign message using the private key.
+--
+-- /WARNING:/ Vulnerable to timing attacks.
 sign :: CPRG g => g -> PrivateKey -> HashFunction -> ByteString -> (Signature, g)
 sign rng pk hash msg =
     case signWith k pk hash msg of

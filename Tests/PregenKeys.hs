@@ -55,4 +55,3 @@ ecdsaPublickeyB = ECDSA.PublicKey
     ecdsaCurveB
    (ECC.Point 0x37d529fa37e42195f10111127ffb2bb38644806bc
               0x447026eee8b34157f3eb51be5185d2be0249ed776)
-

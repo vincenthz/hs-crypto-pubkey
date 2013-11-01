@@ -11,6 +11,10 @@ Features
     * Support fast RSA decryption and signing: using RSA key by-product when possible
     * RSA with blinder: not comprimising security for performance.
 * DSA
+* ECDSA
+    * There is no protection against timing attacks yet. Signing may leak the
+      public key, verification should be fine.
+    * It's slow, not optimized yet.
 * Diffie Hellman: just primitives
 * ElGamal
     * signature/verification scheme
@@ -20,7 +24,6 @@ TODO
 ----
 
 See TODO file.
-one major item is support for Elliptic curve crypto (ECC) with ECDH, ECDSA.
 
 Tests
 -----
