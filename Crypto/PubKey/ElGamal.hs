@@ -33,7 +33,7 @@ module Crypto.PubKey.ElGamal
     ) where
 
 import Data.ByteString (ByteString)
-import Crypto.Number.ModArithmetic (exponantiation, inverse)
+import Crypto.Number.ModArithmetic (expSafe, expFast, inverse)
 import Crypto.Number.Generate (generateMax)
 import Crypto.Number.Serialize (os2ip)
 import Crypto.Number.Basic (gcde_binary)
@@ -66,14 +66,14 @@ generateEphemeral rng q = first toEphemeral $ generatePrivate rng q
 -- | generate a public number that is for the other party benefits.
 -- this number is usually called h=g^a
 generatePublic :: Params -> PrivateNumber -> PublicNumber
-generatePublic (Params p g) (PrivateNumber a) = PublicNumber $ exponantiation g a p
+generatePublic (Params p g) (PrivateNumber a) = PublicNumber $ expSafe g a p
 
 -- | encrypt with a specified ephemeral key
 -- do not reuse ephemeral key.
 encryptWith :: EphemeralKey -> Params -> PublicNumber -> Integer -> (Integer,Integer)
 encryptWith (EphemeralKey b) (Params p g) (PublicNumber h) m = (c1,c2)
-    where s  = exponantiation h b p
-          c1 = exponantiation g b p
+    where s  = expSafe h b p
+          c1 = expSafe g b p
           c2 = (s * m) `mod` p
 
 -- | encrypt a message using params and public keys
@@ -85,7 +85,7 @@ encrypt rng params@(Params p _) public m = first (\b -> encryptWith b params pub
 -- | decrypt message
 decrypt :: Params -> PrivateNumber -> (Integer, Integer) -> Integer
 decrypt (Params p _) (PrivateNumber a) (c1,c2) = (c2 * sm1) `mod` p
-    where s   = exponantiation c1 a p
+    where s   = expSafe c1 a p
           sm1 = fromJust $ inverse s p -- always inversible in Zp
 
 -- | sign a message with an explicit k number
@@ -105,7 +105,7 @@ signWith k (Params p g) (PrivateNumber x) hashF msg
     | k >= p-1 || d > 1 = Nothing -- gcd(k,p-1) is not 1
     | s == 0            = Nothing
     | otherwise         = Just $ Signature (r,s)
-    where r          = exponantiation g k p
+    where r          = expSafe g k p
           h          = os2ip $ hashF msg
           s          = ((h - x*r) * kInv) `mod` (p-1)
           (kInv,_,d) = gcde_binary k (p-1)
@@ -140,5 +140,5 @@ verify (Params p g) (PublicNumber y) hashF msg (Signature (r,s))
     | or [r <= 0,r >= p,s <= 0,s >= (p-1)] = False
     | otherwise                            = lhs == rhs
     where h   = os2ip $ hashF msg
-          lhs = exponantiation g h p
-          rhs = (exponantiation y r p * exponantiation r s p) `mod` p
+          lhs = expFast g h p
+          rhs = (expFast y r p * expFast r s p) `mod` p

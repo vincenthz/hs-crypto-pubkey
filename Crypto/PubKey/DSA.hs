@@ -22,7 +22,7 @@ module Crypto.PubKey.DSA
 import Crypto.Random.API
 import Data.Maybe
 import Data.ByteString (ByteString)
-import Crypto.Number.ModArithmetic (exponantiation, inverse)
+import Crypto.Number.ModArithmetic (expFast, expSafe, inverse)
 import Crypto.Number.Serialize
 import Crypto.Number.Generate
 import Crypto.Types.PubKey.DSA
@@ -43,7 +43,7 @@ signWith k pk hash msg
           -- compute r,s
           kInv      = fromJust $ inverse k q
           hm        = os2ip $ hash msg
-          r         = expmod g k p `mod` q
+          r         = expSafe g k p `mod` q
           s         = (kInv * (hm + x * r)) `mod` q
 
 -- | sign message using the private key.
@@ -68,7 +68,4 @@ verify hash pk (Signature r s) m
           w       = fromJust $ inverse s q
           u1      = (hm*w) `mod` q
           u2      = (r*w) `mod` q
-          v       = ((expmod g u1 p) * (expmod y u2 p)) `mod` p `mod` q
-
-expmod :: Integer -> Integer -> Integer -> Integer
-expmod = exponantiation
+          v       = ((expFast g u1 p) * (expFast y u2 p)) `mod` p `mod` q

@@ -18,7 +18,7 @@ module Crypto.PubKey.DH
     , getShared
     ) where
 
-import Crypto.Number.ModArithmetic (exponantiation)
+import Crypto.Number.ModArithmetic (expSafe)
 import Crypto.Number.Prime (generateSafePrime)
 import Crypto.Number.Generate (generateOfSize)
 import Crypto.Types.PubKey.DH
@@ -39,8 +39,8 @@ generatePrivate rng bits = first PrivateNumber $ generateOfSize rng bits
 -- | generate a public number that is for the other party benefits.
 -- this number is usually called Y in DH text.
 generatePublic :: Params -> PrivateNumber -> PublicNumber
-generatePublic (Params p g) (PrivateNumber x) = PublicNumber $ exponantiation g x p
+generatePublic (Params p g) (PrivateNumber x) = PublicNumber $ expSafe g x p
 
 -- | generate a shared key using our private number and the other party public number
 getShared :: Params -> PrivateNumber -> PublicNumber -> SharedKey
-getShared (Params p _) (PrivateNumber x) (PublicNumber y) = SharedKey $ exponantiation y x p
+getShared (Params p _) (PrivateNumber x) (PublicNumber y) = SharedKey $ expSafe y x p
