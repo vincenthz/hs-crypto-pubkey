@@ -31,7 +31,7 @@ Library
                    , crypto-random >= 0.0 && < 0.1
                    , crypto-pubkey-types >= 0.4 && < 0.5
                    , cryptohash >= 0.9.1
-                   , crypto-numbers >= 0.2
+                   , crypto-numbers >= 0.2.2
   Exposed-modules:   Crypto.PubKey.RSA
                      Crypto.PubKey.RSA.PKCS15
                      Crypto.PubKey.RSA.OAEP
