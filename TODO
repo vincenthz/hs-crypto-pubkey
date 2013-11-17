@@ -2,7 +2,9 @@
 	introduce a new "DigestedMessage" type that either is a digest or a message in some different form.
 	message could be a strict bytestring or lazy bytestring this way.
 
-* ECDSA
+* ECDSA:
+	Use Montgomery ladder for point multiplication, this should take care of timing attacks.
+	Use Shamir's trick for better performance in verification.
 
 * ECC ECDH & ECC ElGamal
 	http://tools.ietf.org/html/rfc6090

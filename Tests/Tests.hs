@@ -22,6 +22,9 @@ import qualified Crypto.PubKey.RSA as RSA
 import qualified Crypto.PubKey.RSA.PKCS15 as RSAPKCS15
 import qualified Crypto.PubKey.RSA.OAEP as RSAOAEP
 import qualified Crypto.PubKey.DSA as DSA
+import qualified Crypto.PubKey.ECC.ECDSA as ECDSA
+import Crypto.Types.PubKey.ECC
+import Crypto.PubKey.ECC.Generate
 import qualified Crypto.PubKey.DH as DH
 import Crypto.Number.Serialize (i2osp)
 import Crypto.PubKey.HashDescr
@@ -116,6 +119,26 @@ prop_rsa_sign_slow_valid = prop_rsa_sign_valid False
 prop_dsa_valid (RSAMessage _ msg) = DSA.verify (SHA1.hash) dsaPublickey signature msg
     where (signature, rng') = DSA.sign rng dsaPrivatekey (SHA1.hash) msg
 
+prop_ecdsa_prime_valid (RSAMessage _ msg) = ECDSA.verify SHA1.hash ecdsaPublickeyP signature msg
+    where (signature, rng') = ECDSA.sign rng ecdsaPrivatekeyP SHA1.hash msg
+
+prop_ecdsa_binary_valid (RSAMessage _ msg) = ECDSA.verify SHA1.hash ecdsaPublickeyB signature msg
+    where (signature, rng') = ECDSA.sign rng ecdsaPrivatekeyB SHA1.hash msg
+
+prop_ecdsa_curve_valid keypair = ECDSA.verify SHA1.hash pubkey signature "test"
+    where (signature, rng') = ECDSA.sign rng privkey SHA1.hash "test"
+          pubkey  = ECDSA.toPublicKey keypair
+          privkey = ECDSA.toPrivateKey keypair
+
+instance Arbitrary ECDSA.KeyPair where
+    arbitrary = do curve <- arbitrary
+                   d     <- getPositive <$> (arbitrary :: Gen (Positive Integer))
+                   let q = generateQ curve d
+                   return $ ECDSA.KeyPair curve q d
+
+instance Arbitrary Curve where
+    arbitrary = elements $ map getCurveByName $ enumFrom SEC_p112r1
+
 instance Arbitrary DH.PrivateNumber where
     arbitrary = fromIntegral <$> (suchThat (arbitrary :: Gen Integer) (\x -> x >= 1))
 
@@ -143,6 +166,9 @@ asymSignatureTests = testGroup "assymmetric cipher signature"
     [ testProperty "RSA(PKCS15) (slow)" prop_rsa_sign_slow_valid
     , testProperty "RSA(PKCS15) (fast)" prop_rsa_sign_fast_valid
     , testProperty "DSA" prop_dsa_valid
+    , testProperty "ECDSA Prime" prop_ecdsa_prime_valid
+    , testProperty "ECDSA Binary" prop_ecdsa_binary_valid
+    , testProperty "ECDSA Curve" prop_ecdsa_curve_valid
     ]
 
 asymOtherTests = testGroup "assymetric other tests"
