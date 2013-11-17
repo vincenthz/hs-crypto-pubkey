@@ -32,7 +32,6 @@ import Crypto.PubKey.HashDescr
 import qualified Crypto.Hash.SHA1 as SHA1
 import RNG
 import KAT
-import ECC
 import PregenKeys
 
 withAleasInteger :: Rng -> Seed -> (Rng -> (a,Rng)) -> a
@@ -180,6 +179,5 @@ main = defaultMain
     [ asymEncryptionTests
     , asymSignatureTests
     , asymOtherTests
-    , testGroup "ECC" eccTests
     , testGroup "KATs" katTests
     ]
