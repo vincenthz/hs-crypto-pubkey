@@ -29,7 +29,7 @@ Library
                    , bytestring
                    , byteable
                    , crypto-random >= 0.0 && < 0.1
-                   , crypto-pubkey-types >= 0.4 && < 0.5
+                   , crypto-pubkey-types >= 0.4.1 && < 0.5
                    , cryptohash >= 0.9.1
                    , crypto-numbers >= 0.2.2
   Exposed-modules:   Crypto.PubKey.RSA
