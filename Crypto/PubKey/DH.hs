@@ -20,7 +20,7 @@ module Crypto.PubKey.DH
 
 import Crypto.Number.ModArithmetic (expSafe)
 import Crypto.Number.Prime (generateSafePrime)
-import Crypto.Number.Generate (generateOfSize)
+import Crypto.Number.Generate (generateMax)
 import Crypto.Types.PubKey.DH
 import Crypto.Random.API
 import Control.Arrow (first)
@@ -33,8 +33,8 @@ generateParams rng bits generator =
 
 -- | generate a private number with no specific property
 -- this number is usually called X in DH text.
-generatePrivate :: CPRG g => g -> Int -> (PrivateNumber, g)
-generatePrivate rng bits = first PrivateNumber $ generateOfSize rng bits
+generatePrivate :: CPRG g => g -> Params -> (PrivateNumber, g)
+generatePrivate rng (Params p _) = first PrivateNumber $ generateMax rng p
 
 -- | generate a public number that is for the other party benefits.
 -- this number is usually called Y in DH text.
