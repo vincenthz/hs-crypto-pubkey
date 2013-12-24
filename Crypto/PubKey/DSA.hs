@@ -12,6 +12,9 @@ module Crypto.PubKey.DSA
     , Signature(..)
     , PublicKey(..)
     , PrivateKey(..)
+    -- * generation
+    , generatePrivate
+    , calculatePublic
     -- * signature primitive
     , sign
     , signWith
@@ -27,6 +30,15 @@ import Crypto.Number.Serialize
 import Crypto.Number.Generate
 import Crypto.Types.PubKey.DSA
 import Crypto.PubKey.HashDescr
+
+-- | generate a private number with no specific property
+-- this number is usually called X in DSA text.
+generatePrivate :: CPRG g => g -> Params -> (PrivateNumber, g)
+generatePrivate rng (Params _ _ q) = generateMax rng q
+
+-- | Calculate the public number from the parameters and the private key
+calculatePublic :: Params -> PrivateNumber -> PublicNumber
+calculatePublic (Params p g _) x = expSafe g x p
 
 -- | sign message using the private key and an explicit k number.
 signWith :: Integer         -- ^ k random number
