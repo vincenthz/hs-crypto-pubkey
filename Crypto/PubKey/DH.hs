@@ -14,6 +14,7 @@ module Crypto.PubKey.DH
     , SharedKey
     , generateParams
     , generatePrivate
+    , calculatePublic
     , generatePublic
     , getShared
     ) where
@@ -36,10 +37,18 @@ generateParams rng bits generator =
 generatePrivate :: CPRG g => g -> Params -> (PrivateNumber, g)
 generatePrivate rng (Params p _) = first PrivateNumber $ generateMax rng p
 
--- | generate a public number that is for the other party benefits.
+-- | calculate the public number from the parameters and the private key
 -- this number is usually called Y in DH text.
+calculatePublic :: Params -> PrivateNumber -> PublicNumber
+calculatePublic (Params p g) (PrivateNumber x) = PublicNumber $ expSafe g x p
+
+-- | calculate the public number from the parameters and the private key
+-- this number is usually called Y in DH text.
+--
+-- DEPRECATED use calculatePublic
 generatePublic :: Params -> PrivateNumber -> PublicNumber
-generatePublic (Params p g) (PrivateNumber x) = PublicNumber $ expSafe g x p
+generatePublic = calculatePublic
+-- commented until 0.3 {-# DEPRECATED generatePublic "use calculatePublic" #-}
 
 -- | generate a shared key using our private number and the other party public number
 getShared :: Params -> PrivateNumber -> PublicNumber -> SharedKey
