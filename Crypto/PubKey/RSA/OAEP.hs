@@ -21,7 +21,7 @@ module Crypto.PubKey.RSA.OAEP
     , decryptSafer
     ) where
 
-import Crypto.Random.API
+import Crypto.Random
 import Crypto.Types.PubKey.RSA
 import Crypto.PubKey.HashDescr
 import Crypto.PubKey.MaskGenFunction

@@ -16,7 +16,7 @@ module Crypto.PubKey.RSA
     , generateBlinder
     ) where
 
-import Crypto.Random.API
+import Crypto.Random
 import Crypto.Types.PubKey.RSA
 import Crypto.Number.ModArithmetic (inverse, inverseCoprimes)
 import Crypto.Number.Generate (generateMax)

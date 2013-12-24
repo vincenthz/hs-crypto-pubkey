@@ -22,7 +22,7 @@ module Crypto.PubKey.RSA.PKCS15
     , verify
     ) where
 
-import Crypto.Random.API
+import Crypto.Random
 import Crypto.PubKey.Internal (and')
 import Crypto.Types.PubKey.RSA
 import Data.ByteString (ByteString)

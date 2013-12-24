@@ -16,7 +16,7 @@ module Crypto.PubKey.RSA.PSS
     , verify
     ) where
 
-import Crypto.Random.API
+import Crypto.Random
 import Crypto.Types.PubKey.RSA
 import Data.ByteString (ByteString)
 import Data.Byteable

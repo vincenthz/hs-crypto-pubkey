@@ -8,7 +8,7 @@ module Crypto.PubKey.ECC.ECDSA
     ) where
 
 import Control.Monad
-import Crypto.Random.API
+import Crypto.Random
 import Data.Bits (shiftR)
 import Data.ByteString (ByteString)
 import Crypto.Number.ModArithmetic (inverse)
