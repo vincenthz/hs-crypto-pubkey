@@ -12,6 +12,8 @@ import Crypto.Number.ModArithmetic
 import Crypto.Number.F2m
 import Crypto.Types.PubKey.ECC
 
+--TODO: Extract helper function for `fromMaybe PointO...`
+
 -- | Elliptic Curve point addition.
 --
 -- /WARNING:/ Vulnerable to timing attacks.
@@ -22,10 +24,11 @@ pointAdd _ p PointO = p
 pointAdd c@(CurveFP (CurvePrime pr _)) p@(Point xp yp) q@(Point xq yq)
     | p == Point xq (-yq) = PointO
     | p == q = pointDouble c p
-    | otherwise = let s  = divmod (yp - yq) (xp - xq) pr
-                      xr = (s ^ (2::Int) - xp - xq) `mod` pr
-                      yr = (s * (xp - xr) - yp) `mod` pr
-                  in Point xr yr
+    | otherwise = fromMaybe PointO $ do
+                      s <- divmod (yp - yq) (xp - xq) pr
+                      let xr = (s ^ (2::Int) - xp - xq) `mod` pr
+                          yr = (s * (xp - xr) - yp) `mod` pr
+                      return $ Point xr yr
 pointAdd c@(CurveF2m (CurveBinary fx cc)) p@(Point xp yp) q@(Point xq yq)
     | p == Point xq (xq `addF2m` yq) = PointO
     | p == q = pointDouble c p
@@ -41,11 +44,11 @@ pointAdd c@(CurveF2m (CurveBinary fx cc)) p@(Point xp yp) q@(Point xq yq)
 -- /WARNING:/ Vulnerable to timing attacks.
 pointDouble :: Curve -> Point -> Point
 pointDouble _ PointO = PointO
-pointDouble (CurveFP (CurvePrime pr cc)) (Point xp yp) =
-    let l = divmod (3 * xp ^ (2::Int) + a) (2 * yp) pr
-        xr = (l ^ (2::Int) - 2 * xp) `mod` pr
+pointDouble (CurveFP (CurvePrime pr cc)) (Point xp yp) = fromMaybe PointO $ do
+    l <- divmod (3 * xp ^ (2::Int) + a) (2 * yp) pr
+    let xr = (l ^ (2::Int) - 2 * xp) `mod` pr
         yr = (l * (xp - xr) - yp) `mod` pr
-    in Point xr yr
+    return $ Point xr yr
   where a = ecc_a cc
 pointDouble (CurveF2m (CurveBinary fx cc)) (Point xp yp) = fromMaybe PointO $ do
     s <- return . addF2m xp =<< divF2m fx yp xp
@@ -64,5 +67,7 @@ pointMul c n p
     | otherwise = pointMul c (n `div` 2) (pointDouble c p)
 
 -- | div and mod
-divmod :: Integer -> Integer -> Integer -> Integer
-divmod y x m = y * fromJust (inverse (x `mod` m) m) `mod` m
+divmod :: Integer -> Integer -> Integer -> Maybe Integer
+divmod y x m = do
+    i <- inverse (x `mod` m) m
+    return $ y * i `mod` m
