@@ -62,6 +62,8 @@ pointDouble (CurveF2m (CurveBinary fx cc)) (Point xp yp) = fromMaybe PointO $ do
 -- /WARNING:/ Vulnerable to timing attacks.
 pointMul :: Curve -> Integer -> Point -> Point
 pointMul c n p
+    | n <  0 = error "pointMul: Multiplying by a negative number is not possible"
+    | n == 0 = PointO
     | n == 1 = p
     | odd n = pointAdd c p (pointMul c (n - 1) p)
     | otherwise = pointMul c (n `div` 2) (pointDouble c p)
