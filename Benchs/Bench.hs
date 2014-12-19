@@ -36,46 +36,50 @@ main = do
         ecdsaSignatureP = fst $ ECDSA.sign rng ecdsaPrivatekeyP SHA1.hash bs
         ecdsaSignatureB = fst $ ECDSA.sign rng ecdsaPrivatekeyB SHA1.hash bs
     defaultMain
-        [ bgroup "RSA PKCS15"
-            [ bench "encryption" $ nf (right . fst . PKCS15.encrypt rng rsaPublickey) bs
-            , bgroup "decryption"
-                [ bench "slow" $ nf (right . PKCS15.decrypt Nothing privateKeySlow) encryptedMsgPKCS
-                , bench "fast" $ nf (right . PKCS15.decrypt Nothing rsaPrivatekey) encryptedMsgPKCS
-                , bench "slow+blinding" $ nf (right . PKCS15.decrypt (Just blinder) privateKeySlow) encryptedMsgPKCS
-                , bench "fast+blinding" $ nf (right . PKCS15.decrypt (Just blinder) rsaPrivatekey) encryptedMsgPKCS
+        [ bgroup "RSA"
+            [ bgroup "PKCS15"
+                [ bench "encryption" $ nf (right . fst . PKCS15.encrypt rng rsaPublickey) bs
+                , bgroup "decryption"
+                    [ bench "slow" $ nf (right . PKCS15.decrypt Nothing privateKeySlow) encryptedMsgPKCS
+                    , bench "fast" $ nf (right . PKCS15.decrypt Nothing rsaPrivatekey) encryptedMsgPKCS
+                    , bench "slow+blinding" $ nf (right . PKCS15.decrypt (Just blinder) privateKeySlow) encryptedMsgPKCS
+                    , bench "fast+blinding" $ nf (right . PKCS15.decrypt (Just blinder) rsaPrivatekey) encryptedMsgPKCS
+                    ]
+                , bgroup "signing"
+                    [ bench "slow" $ nf (right . PKCS15.sign Nothing hashDescrSHA1 privateKeySlow) bs
+                    , bench "fast" $ nf (right . PKCS15.sign Nothing hashDescrSHA1 rsaPrivatekey) bs
+                    , bench "slow+blinding" $ nf (right . PKCS15.sign (Just blinder) hashDescrSHA1 privateKeySlow) bs
+                    , bench "fast+blinding" $ nf (right . PKCS15.sign (Just blinder) hashDescrSHA1 rsaPrivatekey) bs
+                    ]
+                , bench "verify" $ nf (PKCS15.verify hashDescrSHA1 rsaPublickey bs) signedMsgPKCS
                 ]
-            , bgroup "signing"
-                [ bench "slow" $ nf (right . PKCS15.sign Nothing hashDescrSHA1 privateKeySlow) bs
-                , bench "fast" $ nf (right . PKCS15.sign Nothing hashDescrSHA1 rsaPrivatekey) bs
-                , bench "slow+blinding" $ nf (right . PKCS15.sign (Just blinder) hashDescrSHA1 privateKeySlow) bs
-                , bench "fast+blinding" $ nf (right . PKCS15.sign (Just blinder) hashDescrSHA1 rsaPrivatekey) bs
+            , bgroup "OAEP"
+                [ bench "encryption" $ nf (right . fst . OAEP.encrypt rng oaepParams rsaPublickey) bs
+                , bgroup "decryption"
+                    [ bench "slow" $ nf (right . OAEP.decrypt Nothing oaepParams privateKeySlow) encryptedMsgOAEP
+                    , bench "fast" $ nf (right . OAEP.decrypt Nothing oaepParams rsaPrivatekey) encryptedMsgOAEP
+                    , bench "slow+blinding" $ nf (right . OAEP.decrypt (Just blinder) oaepParams privateKeySlow) encryptedMsgOAEP
+                    , bench "fast+blinding" $ nf (right . OAEP.decrypt (Just blinder) oaepParams rsaPrivatekey) encryptedMsgOAEP
+                    ]
                 ]
-            , bench "verify" $ nf (PKCS15.verify hashDescrSHA1 rsaPublickey bs) signedMsgPKCS
-            ]
-        , bgroup "RSA OAEP"
-            [ bench "encryption" $ nf (right . fst . OAEP.encrypt rng oaepParams rsaPublickey) bs
-            , bgroup "decryption"
-                [ bench "slow" $ nf (right . OAEP.decrypt Nothing oaepParams privateKeySlow) encryptedMsgOAEP
-                , bench "fast" $ nf (right . OAEP.decrypt Nothing oaepParams rsaPrivatekey) encryptedMsgOAEP
-                , bench "slow+blinding" $ nf (right . OAEP.decrypt (Just blinder) oaepParams privateKeySlow) encryptedMsgOAEP
-                , bench "fast+blinding" $ nf (right . OAEP.decrypt (Just blinder) oaepParams rsaPrivatekey) encryptedMsgOAEP
+            , bgroup "PSS"
+                [ bgroup "signing"
+                    [ bench "slow" $ nf (right . fst . PSS.sign rng Nothing pssParams privateKeySlow) bs
+                    , bench "fast" $ nf (right . fst . PSS.sign rng Nothing pssParams rsaPrivatekey) bs
+                    , bench "slow+blinding" $ nf (right . fst . PSS.sign rng (Just blinder) pssParams privateKeySlow) bs
+                    , bench "fast+blinding" $ nf (right . fst . PSS.sign rng (Just blinder) pssParams rsaPrivatekey) bs
+                    ]
+                , bench "verify" $ nf (PSS.verify pssParams rsaPublickey bs) signedMsgPSS
                 ]
             ]
-        , bgroup "RSA PSS"
-            [ bgroup "signing"
-                [ bench "slow" $ nf (right . fst . PSS.sign rng Nothing pssParams privateKeySlow) bs
-                , bench "fast" $ nf (right . fst . PSS.sign rng Nothing pssParams rsaPrivatekey) bs
-                , bench "slow+blinding" $ nf (right . fst . PSS.sign rng (Just blinder) pssParams privateKeySlow) bs
-                , bench "fast+blinding" $ nf (right . fst . PSS.sign rng (Just blinder) pssParams rsaPrivatekey) bs
+        , bgroup "ECDSA"
+            [ bgroup "secp160r1"
+                [ bench "sign" $ nf (fst . ECDSA.sign rng ecdsaPrivatekeyP SHA1.hash) bs
+                , bench "verify"  $ nf (ECDSA.verify SHA1.hash ecdsaPublickeyP ecdsaSignatureP) bs
                 ]
-            , bench "verify" $ nf (PSS.verify pssParams rsaPublickey bs) signedMsgPSS
-            ]
-        , bgroup "ECDSA secp160r1"
-            [ bench "sign" $ nf (fst . ECDSA.sign rng ecdsaPrivatekeyP SHA1.hash) bs
-            , bench "verify"  $ nf (ECDSA.verify SHA1.hash ecdsaPublickeyP ecdsaSignatureP) bs
-            ]
-        , bgroup "ECDSA sect163k1"
-            [ bench "sign" $ nf (fst . ECDSA.sign rng ecdsaPrivatekeyB SHA1.hash) bs
-            , bench "verify"  $ nf (ECDSA.verify SHA1.hash ecdsaPublickeyB ecdsaSignatureB) bs
+            , bgroup "sect163k1"
+                [ bench "sign" $ nf (fst . ECDSA.sign rng ecdsaPrivatekeyB SHA1.hash) bs
+                , bench "verify"  $ nf (ECDSA.verify SHA1.hash ecdsaPublickeyB ecdsaSignatureB) bs
+                ]
             ]
         ]
