@@ -96,13 +96,13 @@ pointMul c n p@(Point xp yp)
         doubleAndAddPrime pr cc = loop
           where loop i !z
                     | i == 1    = z
-                    | odd i     = pointAddPrime pr cc z (loop (i - 1) z)
+                    | odd i     = pointAddPrime pr cc z (loop (i `unsafeShiftR` 1) (pointDoublePrime pr cc z))
                     | otherwise = loop (i `unsafeShiftR` 1) (pointDoublePrime pr cc z)
 
         doubleAndAddBinary fx cc = loop
           where loop i !z
                     | i == 1    = z
-                    | odd i     = pointAddBinary fx cc z (loop (i - 1) z)
+                    | odd i     = pointAddBinary fx cc z (loop (i `unsafeShiftR` 1) (pointDoubleBinary fx cc z))
                     | otherwise = loop (i `unsafeShiftR` 1) (pointDoubleBinary fx cc z)
 
 -- | Check if a point is the point at infinity.
