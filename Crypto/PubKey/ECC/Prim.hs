@@ -5,6 +5,7 @@ module Crypto.PubKey.ECC.Prim
     ( pointAdd
     , pointDouble
     , pointMul
+    , isPointAtInfinity
     ) where
 
 import Data.Maybe
@@ -68,6 +69,11 @@ pointMul c n p@(Point xp yp)
     | n == 1 = p
     | odd n = pointAdd c p (pointMul c (n - 1) p)
     | otherwise = pointMul c (n `div` 2) (pointDouble c p)
+
+-- | Check if a point is the point at infinity.
+isPointAtInfinity :: Point -> Bool
+isPointAtInfinity PointO = True
+isPointAtInfinity _      = False
 
 -- | div and mod
 divmod :: Integer -> Integer -> Integer -> Maybe Integer
