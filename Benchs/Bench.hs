@@ -11,6 +11,8 @@ import Crypto.PubKey.RSA.OAEP as OAEP
 import Crypto.PubKey.RSA.PSS as PSS
 import Crypto.PubKey.HashDescr
 import Crypto.PubKey.ECC.ECDSA as ECDSA
+import Crypto.PubKey.ECC.Prim as ECC
+import Crypto.Types.PubKey.ECC as ECC
 import Crypto.Random
 import Control.DeepSeq
 
@@ -21,6 +23,14 @@ right (Left _)  = error "left received"
 
 instance NFData Signature where
     rnf (Signature r s) = rnf r `seq` rnf s
+
+instance NFData Point where
+    rnf PointO      = ()
+    rnf (Point x y) = x `seq` y `seq` ()
+
+pointN curve i = pointMul curve i g
+  where common = ECC.common_curve curve
+        g      = ECC.ecc_g common
 
 main = do
     rng <- cprgCreate `fmap` createEntropyPool :: IO SystemRNG
@@ -35,6 +45,11 @@ main = do
         pssParams  = PSS.defaultPSSParamsSHA1
         ecdsaSignatureP = fst $ ECDSA.sign rng ecdsaPrivatekeyP SHA1.hash bs
         ecdsaSignatureB = fst $ ECDSA.sign rng ecdsaPrivatekeyB SHA1.hash bs
+
+        !pointP1P = pointN ecdsaCurveP 5
+        !pointP2P = pointN ecdsaCurveP 9
+        !pointP1B = pointN ecdsaCurveB 5
+        !pointP2B = pointN ecdsaCurveB 9
     defaultMain
         [ bgroup "RSA"
             [ bgroup "PKCS15"
@@ -70,6 +85,18 @@ main = do
                     , bench "fast+blinding" $ nf (right . fst . PSS.sign rng (Just blinder) pssParams rsaPrivatekey) bs
                     ]
                 , bench "verify" $ nf (PSS.verify pssParams rsaPublickey bs) signedMsgPSS
+                ]
+            ]
+        , bgroup "ECC"
+            [ bgroup "add"
+                [ bench "prime" $ nf (ECC.pointAdd ecdsaCurveP pointP1P) pointP2P
+                , bench "binary" $ nf (ECC.pointAdd ecdsaCurveB pointP1B) pointP2B
+                ]
+            , bgroup "mul"
+                [ bench "prime * 5" $ nf (\i -> ECC.pointMul ecdsaCurveP i pointP1P) 5
+                , bench "prime * 1234" $ nf (\i -> ECC.pointMul ecdsaCurveP i pointP1P) 1234
+                , bench "binary * 5" $ nf (\i -> ECC.pointMul ecdsaCurveB i pointP1B) 5
+                , bench "binary * 1234" $ nf (\i -> ECC.pointMul ecdsaCurveB i pointP1B) 1234
                 ]
             ]
         , bgroup "ECDSA"
