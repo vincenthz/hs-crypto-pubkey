@@ -33,6 +33,7 @@ import qualified Crypto.Hash.SHA1 as SHA1
 import RNG
 import KAT
 import PregenKeys
+import EccArithmetic
 
 withAleasInteger :: Rng -> Seed -> (Rng -> (a,Rng)) -> a
 withAleasInteger rng (Seed i) f = fst $ f $ reseed (i2osp (if i < 0 then -i else i)) rng
@@ -136,9 +137,6 @@ instance Arbitrary ECDSA.KeyPair where
                    let q = generateQ curve d
                    return $ ECDSA.KeyPair curve q d
 
-instance Arbitrary Curve where
-    arbitrary = elements $ map getCurveByName $ enumFrom SEC_p112r1
-
 instance Arbitrary DH.PrivateNumber where
     arbitrary = fromIntegral <$> (suchThat (arbitrary :: Gen Integer) (\x -> x >= 1))
 
@@ -173,6 +171,7 @@ asymSignatureTests = testGroup "assymmetric cipher signature"
 
 asymOtherTests = testGroup "assymetric other tests"
     [ testProperty "DH valid" prop_dh_valid
+    , testGroup "ECC arithmetic" properties_ecc_arithmetic
     ]
 
 main = defaultMain
