@@ -39,7 +39,5 @@ instance Arbitrary GeneratePoint2 where
 properties_ecc_arithmetic =
     [ testProperty "commutative" $ \(GeneratePoint2 curve p1 p2) ->
         pointAdd curve p1 p2 == pointAdd curve p2 p1
-    , testGroup "point-infinity"
-        [ testProperty "add-neutral" $ \(GeneratePoint1 curve p1) -> pointAdd curve p1 PointO == p1
-        ]
+    , testProperty "add-neutral" $ \(GeneratePoint1 curve p1) -> pointAdd curve p1 PointO == p1
     ]
