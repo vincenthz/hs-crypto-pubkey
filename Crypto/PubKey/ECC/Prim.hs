@@ -43,19 +43,34 @@ pointAdd c@(CurveF2m (CurveBinary fx cc)) p@(Point xp yp) q@(Point xq yq)
 -- | Elliptic Curve point doubling.
 --
 -- /WARNING:/ Vulnerable to timing attacks.
+--
+-- This perform the following calculation:
+-- > lambda = (3 * xp ^ 2 + a) / 2 yp
+-- > xr = lambda ^ 2 - 2 xp
+-- > yr = lambda (xp - xr) - yp
+--
+-- With binary curve:
+-- > xp == 0   => P = O
+-- > otherwise =>
+-- >    s = xp + (yp / xp)
+-- >    xr = s ^ 2 + s + a
+-- >    yr = xp ^ 2 + (s+1) * xr
+--
 pointDouble :: Curve -> Point -> Point
 pointDouble _ PointO = PointO
 pointDouble (CurveFP (CurvePrime pr cc)) (Point xp yp) = fromMaybe PointO $ do
-    l <- divmod (3 * xp ^ (2::Int) + a) (2 * yp) pr
-    let xr = (l ^ (2::Int) - 2 * xp) `mod` pr
-        yr = (l * (xp - xr) - yp) `mod` pr
+    lambda <- divmod (3 * xp ^ (2::Int) + a) (2 * yp) pr
+    let xr = (lambda ^ (2::Int) - 2 * xp) `mod` pr
+        yr = (lambda * (xp - xr) - yp) `mod` pr
     return $ Point xr yr
   where a = ecc_a cc
-pointDouble (CurveF2m (CurveBinary fx cc)) (Point xp yp) = fromMaybe PointO $ do
-    s <- return . addF2m xp =<< divF2m fx yp xp
-    let xr = mulF2m fx s s `addF2m` s `addF2m` a
-        yr = mulF2m fx xp xp `addF2m` mulF2m fx xr (s `addF2m` 1)
-    return $ Point xr yr
+pointDouble (CurveF2m (CurveBinary fx cc)) (Point xp yp)
+    | xp == 0   = PointO
+    | otherwise = fromMaybe PointO $ do
+        s <- return . addF2m xp =<< divF2m fx yp xp
+        let xr = mulF2m fx s s `addF2m` s `addF2m` a
+            yr = mulF2m fx xp xp `addF2m` mulF2m fx xr (s `addF2m` 1)
+        return $ Point xr yr
   where a = ecc_a cc
 
 -- | Elliptic curve point multiplication (double and add algorithm).
