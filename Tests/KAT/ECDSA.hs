@@ -58,7 +58,7 @@ doSignatureTest (i, vector) = testCase (show i) (expected @=? actual)
 doVerifyTest (i, vector) = testCase (show i) (True @=? actual)
   where actual = ECDSA.verify SHA1.hash (vectorToPublic vector) (ECDSA.Signature (r vector) (s vector)) (msg vector)
 
-ecdsaTests = testGroup "DSA"
+ecdsaTests = testGroup "ECDSA"
     [ testGroup "SHA1"
         [ testGroup "signature" $ map doSignatureTest (zip [0..] vectorsSHA1)
         , testGroup "verify" $ map doVerifyTest (zip [0..] vectorsSHA1)
