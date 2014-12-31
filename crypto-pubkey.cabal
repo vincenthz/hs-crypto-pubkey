@@ -14,7 +14,7 @@ Maintainer:          Vincent Hanquez <vincent@snarc.org>
 Synopsis:            Public Key cryptography
 Category:            Cryptography
 Build-Type:          Simple
-Homepage:            http://github.com/vincenthz/hs-crypto-pubkey
+Homepage:            https://github.com/vincenthz/hs-crypto-pubkey
 Cabal-Version:       >=1.8
 Extra-Source-Files:  Tests/*.hs
                      Tests/KAT/*.hs
@@ -80,4 +80,4 @@ Benchmark bench-crypto-pubkey
 
 source-repository head
   type:     git
-  location: git://github.com/vincenthz/hs-crypto-pubkey
+  location: https://github.com/vincenthz/hs-crypto-pubkey
