@@ -175,8 +175,8 @@ asymOtherTests = testGroup "assymetric other tests"
     ]
 
 main = defaultMain
-    [ asymEncryptionTests
+    [ testGroup "KATs" katTests
+    , asymEncryptionTests
     , asymSignatureTests
     , asymOtherTests
-    , testGroup "KATs" katTests
     ]
