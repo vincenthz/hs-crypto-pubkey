@@ -19,6 +19,7 @@ import qualified Crypto.Hash.SHA1 as SHA1
 import KAT.OAEP
 import KAT.PSS
 import KAT.DSA
+import KAT.ECC
 import KAT.ECDSA
 
 data VectorMgf = VectorMgf { seed :: ByteString
@@ -40,5 +41,6 @@ katTests =
     , pssTests
     , oaepTests
     , dsaTests
+    , eccTests
     , ecdsaTests
     ]

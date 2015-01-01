@@ -6,6 +6,7 @@ module Crypto.PubKey.ECC.Prim
     , pointDouble
     , pointMul
     , isPointAtInfinity
+    , isPointValid
     ) where
 
 import Data.Maybe
@@ -89,6 +90,30 @@ pointMul c n p@(Point xp yp)
 isPointAtInfinity :: Point -> Bool
 isPointAtInfinity PointO = True
 isPointAtInfinity _      = False
+
+-- | check if a point is on specific curve
+--
+-- This perform three checks:
+--
+-- * x is not out of range
+-- * y is not out of range
+-- * the equation @y^2 = x^3 + a*x + b (mod p)@ holds
+isPointValid :: Curve -> Point -> Bool
+isPointValid _     PointO      = True
+isPointValid curve (Point x y) = validVal x && validVal y && (y ^ int2) `eq` (x ^ int3 + a * x + b)
+  where cc = common_curve curve
+        a  = ecc_a cc
+        b  = ecc_b cc
+
+        (validVal, eq) = case curve of
+                CurveFP (CurvePrime p _)    -> (\e -> e >= 0 && e < p, eqModP p)
+                CurveF2m (CurveBinary fx _) -> (\e -> e >= 0 && e < fx, eqModF2m fx)
+
+        eqModP p z1 z2 = (z1 `mod` p) == (z2 `mod` p)
+        eqModF2m fx z1 z2 = (modF2m fx z1) == (modF2m fx z2)
+
+        int2 = 2 :: Int
+        int3 = 3 :: Int
 
 -- | div and mod
 divmod :: Integer -> Integer -> Integer -> Maybe Integer
