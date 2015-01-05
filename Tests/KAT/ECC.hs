@@ -7,9 +7,8 @@ import Crypto.Number.Serialize
 import qualified Crypto.Types.PubKey.ECC as ECC
 import qualified Crypto.PubKey.ECC.Prim as ECC
 
-import Test.HUnit
-import Test.Framework (testGroup)
-import Test.Framework.Providers.HUnit (testCase)
+import Test.Tasty
+import Test.Tasty.HUnit
 
 
 data VectorPoint = VectorPoint

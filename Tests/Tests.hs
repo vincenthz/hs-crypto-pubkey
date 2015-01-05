@@ -1,10 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Test.Framework (Test, defaultMain, testGroup)
-import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Test.Tasty
+import Test.Tasty.QuickCheck
 
-import Test.QuickCheck
-import Test.QuickCheck.Test
 import System.IO (hFlush, stdout)
 
 import Control.Monad
@@ -174,7 +172,7 @@ asymOtherTests = testGroup "assymetric other tests"
     , testGroup "ECC arithmetic" properties_ecc_arithmetic
     ]
 
-main = defaultMain
+main = defaultMain $ testGroup "crypto-pubkey"
     [ testGroup "KATs" katTests
     , asymEncryptionTests
     , asymSignatureTests

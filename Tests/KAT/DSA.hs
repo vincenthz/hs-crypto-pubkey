@@ -8,9 +8,8 @@ import qualified Data.ByteString.Char8 as BC
 import qualified Crypto.PubKey.DSA as DSA
 import qualified Crypto.Hash.SHA1 as SHA1
 
-import Test.HUnit
-import Test.Framework (Test, testGroup)
-import Test.Framework.Providers.HUnit (testCase)
+import Test.Tasty
+import Test.Tasty.HUnit
 
 data VectorDSA = VectorDSA
     { pgq :: DSA.Params

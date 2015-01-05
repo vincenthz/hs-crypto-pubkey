@@ -10,9 +10,8 @@ import Crypto.PubKey.MaskGenFunction
 import qualified Crypto.PubKey.RSA.OAEP as OAEP
 import qualified Crypto.Hash.SHA1 as SHA1
 
-import Test.HUnit
-import Test.Framework (Test, defaultMain, testGroup)
-import Test.Framework.Providers.HUnit (testCase)
+import Test.Tasty
+import Test.Tasty.HUnit
 
 rsaKeyInt = PrivateKey
     { private_pub = PublicKey

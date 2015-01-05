@@ -58,11 +58,9 @@ Test-Suite test-crypto-pubkey
                    , crypto-pubkey-types
                    , crypto-numbers
                    , crypto-random
-                   , QuickCheck >= 2
-                   , HUnit
-                   , test-framework >= 0.3.3
-                   , test-framework-quickcheck2 >= 0.2.9
-                   , test-framework-hunit
+                   , tasty
+                   , tasty-quickcheck
+                   , tasty-hunit
 
 Benchmark bench-crypto-pubkey
   hs-source-dirs:    Benchs

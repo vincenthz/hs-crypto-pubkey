@@ -10,9 +10,8 @@ import qualified Crypto.PubKey.ECC.ECDSA as ECDSA
 import qualified Crypto.Types.PubKey.ECC as ECC
 import qualified Crypto.Hash.SHA1 as SHA1
 
-import Test.HUnit
-import Test.Framework (testGroup)
-import Test.Framework.Providers.HUnit (testCase)
+import Test.Tasty.HUnit
+import Test.Tasty
 
 data VectorECDSA = VectorECDSA
     { curve :: ECC.Curve

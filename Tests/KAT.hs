@@ -1,11 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 module KAT where
 
-import Test.Framework (Test, defaultMain, testGroup)
-import Test.Framework.Providers.HUnit (testCase)
-import Test.QuickCheck
-import Test.QuickCheck.Test
-import Test.HUnit
+import Test.Tasty
+import Test.Tasty.HUnit
+import Test.Tasty.QuickCheck
 import System.IO (hFlush, stdout)
 
 import Data.ByteString (ByteString)

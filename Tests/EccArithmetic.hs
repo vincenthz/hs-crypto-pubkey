@@ -1,8 +1,6 @@
 module EccArithmetic (properties_ecc_arithmetic) where
 
-import Test.Framework.Providers.QuickCheck2 (testProperty)
-import Test.QuickCheck
-import Test.QuickCheck.Test
+import Test.Tasty.QuickCheck
 
 import Crypto.Types.PubKey.ECC
 import Crypto.PubKey.ECC.Generate
