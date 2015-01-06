@@ -25,7 +25,6 @@ script:
  - cabal configure --enable-tests -v2
  - cabal build
  - cabal test
- - cabal check
  - cabal sdist
  - export SRC_TGZ=$(cabal info . | awk '{print $2 ".tar.gz";exit}') ;
    cd dist/;
