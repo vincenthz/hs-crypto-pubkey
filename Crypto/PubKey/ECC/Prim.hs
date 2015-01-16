@@ -99,21 +99,25 @@ isPointAtInfinity _      = False
 -- * y is not out of range
 -- * the equation @y^2 = x^3 + a*x + b (mod p)@ holds
 isPointValid :: Curve -> Point -> Bool
-isPointValid _     PointO      = True
-isPointValid curve (Point x y) = validVal x && validVal y && (y ^ int2) `eq` (x ^ int3 + a * x + b)
-  where cc = common_curve curve
-        a  = ecc_a cc
+isPointValid _                           PointO      = True
+isPointValid (CurveFP (CurvePrime p cc)) (Point x y) =
+    isValid x && isValid y && (y ^ (2 :: Int)) `eqModP` (x ^ (3 :: Int) + a * x + b)
+  where a  = ecc_a cc
         b  = ecc_b cc
-
-        (validVal, eq) = case curve of
-                CurveFP (CurvePrime p _)    -> (\e -> e >= 0 && e < p, eqModP p)
-                CurveF2m (CurveBinary fx _) -> (\e -> e >= 0 && e < fx, eqModF2m fx)
-
-        eqModP p z1 z2 = (z1 `mod` p) == (z2 `mod` p)
-        eqModF2m fx z1 z2 = (modF2m fx z1) == (modF2m fx z2)
-
-        int2 = 2 :: Int
-        int3 = 3 :: Int
+        eqModP z1 z2 = (z1 `mod` p) == (z2 `mod` p)
+        isValid e = e >= 0 && e < p
+isPointValid curve@(CurveF2m (CurveBinary fx cc)) pt@(Point x y) =
+    and [ isValid x
+        , isValid y
+        , ((((x `add` a) `mul` x `add` y) `mul` x) `add` b `add` (squareF2m fx y)) == 0
+        ]
+  where a  = ecc_a cc
+        b  = ecc_b cc
+        x3 :: Integer
+        x3 = (squareF2m fx x) `mul` x
+        add = addF2m
+        mul = mulF2m fx
+        isValid e = modF2m fx e == e
 
 -- | div and mod
 divmod :: Integer -> Integer -> Integer -> Maybe Integer
