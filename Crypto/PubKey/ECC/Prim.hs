@@ -113,8 +113,6 @@ isPointValid curve@(CurveF2m (CurveBinary fx cc)) pt@(Point x y) =
         ]
   where a  = ecc_a cc
         b  = ecc_b cc
-        x3 :: Integer
-        x3 = (squareF2m fx x) `mul` x
         add = addF2m
         mul = mulF2m fx
         isValid e = modF2m fx e == e
