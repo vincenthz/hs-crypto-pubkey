@@ -61,6 +61,7 @@ Test-Suite test-crypto-pubkey
                    , tasty
                    , tasty-quickcheck
                    , tasty-hunit
+                   , tasty-kat
 
 Benchmark bench-crypto-pubkey
   hs-source-dirs:    Benchs

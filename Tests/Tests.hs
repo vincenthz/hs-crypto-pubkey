@@ -172,9 +172,12 @@ asymOtherTests = testGroup "assymetric other tests"
     , testGroup "ECC arithmetic" properties_ecc_arithmetic
     ]
 
-main = defaultMain $ testGroup "crypto-pubkey"
-    [ testGroup "KATs" katTests
-    , asymEncryptionTests
-    , asymSignatureTests
-    , asymOtherTests
-    ]
+main = do
+    kats <- sequence newKats
+    defaultMain $ testGroup "crypto-pubkey"
+        [ testGroup "KATs" katTests
+        , testGroup "KAT2s" kats
+        , asymEncryptionTests
+        , asymSignatureTests
+        , asymOtherTests
+        ]

@@ -42,3 +42,5 @@ katTests =
     , eccTests
     , ecdsaTests
     ]
+
+newKats = [ eccKatTests ]
