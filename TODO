@@ -15,3 +15,5 @@
 	need to change crypto-pubkey-types to use bits instead of bytes.
 
 * more KATs (RSA PKCS15, ElGamal, ECC points, ECDSA)
+
+* koblitz curves : fix detection of "Added PT of order 2" is not a valid point.
