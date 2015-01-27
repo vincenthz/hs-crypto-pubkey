@@ -18,6 +18,7 @@ Homepage:            https://github.com/vincenthz/hs-crypto-pubkey
 Cabal-Version:       >=1.8
 Extra-Source-Files:  Tests/*.hs
                      Tests/KAT/*.hs
+                     KATs/*.txt
                      Benchs/PregenKeys.hs
 
 Library
